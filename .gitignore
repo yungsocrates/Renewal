@@ -133,8 +133,12 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Project specific
-renewal_reports/
+# Project specific - allow HTML files for Netlify deployment
+renewal_reports/*.csv
+renewal_reports/*.xlsx
+renewal_reports/*.pdf
+renewal_reports/*.log
+!renewal_reports/*.html
 *.csv
 *.xlsx
 *.pdf

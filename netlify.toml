@@ -1,0 +1,17 @@
+[build]
+  publish = "renewal_reports"
+  command = "python substitute_renewal_analytics.py"
+
+[build.environment]
+  PYTHON_VERSION = "3.8"
+
+[[redirects]]
+  from = "/*"
+  to = "/renewal_analytics_report.html"
+  status = 200
+
+[context.production]
+  command = "python substitute_renewal_analytics.py && echo 'Build complete'"
+
+[context.deploy-preview]
+  command = "python substitute_renewal_analytics.py && echo 'Preview build complete'"

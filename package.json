@@ -2,16 +2,9 @@
   "name": "nycdoe-substitute-renewal-analytics",
   "version": "1.0.0",
   "description": "Comprehensive analytics dashboard for NYCDOE substitute teacher and paraprofessional renewal data",
-  "main": "substitute_renewal_analytics.py",
-  "scripts": {
-    "start": "python substitute_renewal_analytics.py",
-    "build": "python substitute_renewal_analytics.py",
-    "test": "python -m pytest tests/",
-    "lint": "flake8 substitute_renewal_analytics.py"
-  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/nycdoe-substitute-renewal-analytics.git"
+    "url": "https://github.com/yungsocrates/Renewal.git"
   },
   "keywords": [
     "education",
@@ -29,14 +22,7 @@
   "author": "HR School Support Analysis Team",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/yourusername/nycdoe-substitute-renewal-analytics/issues"
+    "url": "https://github.com/yungsocrates/Renewal/issues"
   },
-  "homepage": "https://github.com/yourusername/nycdoe-substitute-renewal-analytics#readme",
-  "dependencies": {
-    "python": ">=3.7"
-  },
-  "devDependencies": {},
-  "engines": {
-    "python": ">=3.7"
-  }
+  "homepage": "https://github.com/yungsocrates/Renewal#readme"
 }

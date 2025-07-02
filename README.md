@@ -5,8 +5,10 @@ A comprehensive analytics tool for analyzing substitute teacher and paraprofessi
 ## 🚀 Features
 
 - **Comprehensive Data Analysis**: Analyzes substitute teacher and paraprofessional renewal data
-- **Interactive Visualizations**: Plotly-powered charts and graphs
-- **HTML Dashboard**: Professional, responsive dashboard with key metrics
+- **Comparison Analytics**: Compare current data with historical data to track changes over time
+- **Interactive Visualizations**: Plotly-powered charts and graphs with trend indicators
+- **HTML Dashboard**: Professional, responsive dashboard with key metrics and difference indicators
+- **Completion Rate Tracking**: Monitor SPA and STE completion rate changes with percentage differences
 - **Export Capabilities**: Export reports to PDF, Excel, and CSV formats
 - **Automated Categorization**: Intelligently categorizes renewal requirements and completion status
 
@@ -45,15 +47,28 @@ A comprehensive analytics tool for analyzing substitute teacher and paraprofessi
    ```
 
 3. Place your CSV files in the project directory:
-   - `substitute_paraprofessionals.csv`
-   - `substitute_teachers.csv`
+   - `substitute_paraprofessionals.csv` (current data)
+   - `substitute_teachers.csv` (current data)
+   - `substitute_paraprofessionals_old.csv` (optional - for comparison)
+   - `substitute_teachers_old.csv` (optional - for comparison)
 
 ## 📈 Usage
 
-### Command Line
+### Standard Mode (Single Dataset Analysis)
 ```bash
 python substitute_renewal_analytics.py
 ```
+
+### Comparison Mode (Historical Data Comparison)
+To enable comparison mode, place historical data files with "_old" suffix:
+- `substitute_paraprofessionals_old.csv`
+- `substitute_teachers_old.csv`
+
+The script will automatically detect these files and:
+- Calculate differences between current and historical data
+- Display changes with ▲/▼ indicators in the HTML report
+- Show percentage changes for completion rates
+- Include comparison summaries in terminal output
 
 ### Programmatic Usage
 ```python
@@ -66,6 +81,29 @@ main()
 import pandas as pd
 df_para = pd.read_csv('substitute_paraprofessionals.csv')
 para_results = analyze_substitute_paraprofessionals(df_para)
+```
+
+## 🔄 Comparison Analytics
+
+The tool supports historical data comparison to track changes over time:
+
+### Key Features:
+- **Automatic Detection**: Automatically detects "_old" CSV files for comparison
+- **Change Indicators**: Visual indicators (▲ for increase, ▼ for decrease) in HTML reports
+- **Completion Rate Tracking**: Percentage point changes in SPA and STE completion rates
+- **Comprehensive Metrics**: Comparison across all analysis categories
+- **Terminal Summary**: Quick overview of changes in command-line output
+
+### Example Output:
+```
+📊 Comparison Mode: Old data files detected
+  Para Old Data: ✓
+  Teacher Old Data: ✓
+
+Substitute Paraprofessionals:
+  • Total Eligible: 15,234 (+234)
+  • Completed: 12,567 (+189)
+  • Completion Rate: 82.5% (+1.2%)
 ```
 
 ## 📁 Project Structure

@@ -681,22 +681,85 @@ def create_visualization_charts(para_results, teacher_results, output_dir):
     
     return [para_chart_file, teacher_chart_file, combined_chart_file]
 
-def generate_html_report(para_results, teacher_results, chart_files, output_dir):
+def generate_html_report(para_results, teacher_results, para_differences, teacher_differences, 
+                        para_percentage_differences, teacher_percentage_differences, 
+                        chart_files, output_dir, has_comparison=False, 
+                        para_old_results=None, teacher_old_results=None):
     """
-    Generate comprehensive HTML report
+    Generate comprehensive HTML report with difference indicators
     
     Args:
         para_results (dict): Paraprofessional analysis results
         teacher_results (dict): Teacher analysis results
+        para_differences (dict): Paraprofessional differences from old data
+        teacher_differences (dict): Teacher differences from old data
         chart_files (list): List of chart file paths
         output_dir (str): Output directory
+        has_comparison (bool): Whether comparison data is available
+        para_old_results (dict): Old paraprofessional results for percentage calculations
+        teacher_old_results (dict): Old teacher results for percentage calculations
     """
-    # Calculate completion rates
+    # Calculate completion rates for current data
     para_completion_rate = (para_results.get('total_complete', 0) / 
                            max(para_results.get('total_eligible', 1), 1) * 100)
     
     teacher_completion_rate = (teacher_results.get('total_prc_pru_complete', 0) / 
                               max(teacher_results.get('total_prc_pru_eligible', 1), 1) * 100)
+    
+    # Calculate completion rates for old data (for percentage differences)
+    para_old_completion_rate = 0
+    teacher_old_completion_rate = 0
+    
+    if has_comparison and para_old_results and teacher_old_results:
+        # Calculate old completion rates using the original old results
+        para_old_completion_rate = (para_old_results.get('total_complete', 0) / 
+                                   max(para_old_results.get('total_eligible', 1), 1) * 100)
+        
+        teacher_old_completion_rate = (teacher_old_results.get('total_prc_pru_complete', 0) / 
+                                      max(teacher_old_results.get('total_prc_pru_eligible', 1), 1) * 100)
+    
+    # Function to format metric with difference
+    def format_metric_with_diff(value, diff_value, show_diff=True):
+        """Format a metric value with optional difference indicator"""
+        formatted_value = format_number(value)
+        if not show_diff or not has_comparison or diff_value == "0":
+            return formatted_value
+        
+        # Determine color and style based on difference
+        if diff_value.startswith('+'):
+            color = "#28a745"  # Green for positive
+            icon = "▲"
+        elif diff_value.startswith('-'):
+            color = "#dc3545"  # Red for negative
+            icon = "▼"
+        else:
+            return formatted_value
+        
+        return f'{formatted_value}<br><small style="color: {color}; font-weight: bold;">{icon} {diff_value}</small>'
+    
+    # Function to format percentage with difference
+    def format_percentage_with_diff(value, diff_value, show_diff=True):
+        """Format a percentage value with optional difference indicator"""
+        formatted_value = format_percentage(value)
+        if not show_diff or not has_comparison or diff_value == "0%" or not diff_value:
+            return formatted_value
+        
+        # Determine color and style based on difference
+        if diff_value.startswith('+'):
+            color = "#28a745"  # Green for positive
+            icon = "▲"
+        elif diff_value.startswith('-'):
+            color = "#dc3545"  # Red for negative
+            icon = "▼"
+        else:
+            return formatted_value
+        
+        return f'{formatted_value}<br><small style="color: {color}; font-weight: bold;">{icon} {diff_value}</small>'
+    
+    # Comparison header text
+    comparison_text = ""
+    if has_comparison:
+        comparison_text = "<p><strong>📊 Comparison Mode:</strong> Changes from previous data shown with ▲/▼ indicators</p>"
     
     html_content = f"""
     <!DOCTYPE html>
@@ -809,6 +872,7 @@ def generate_html_report(para_results, teacher_results, chart_files, output_dir)
             <h1>NYCDOE Substitute Renewal Analytics Dashboard</h1>
             <p>Comprehensive Analysis of Substitute Teacher and Paraprofessional Renewal Data</p>
             <p>Generated on: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
+            {comparison_text}
         </div>
 
         <div class="section">
@@ -817,19 +881,19 @@ def generate_html_report(para_results, teacher_results, chart_files, output_dir)
                 <h3>Key Performance Indicators</h3>
                 <div class="metrics-grid">
                     <div class="metric-card">
-                        <div class="metric-value">{format_number(para_results.get('total_eligible', 0))}</div>
+                        <div class="metric-value">{format_metric_with_diff(para_results.get('total_eligible', 0), para_differences.get('total_eligible', '0'), has_comparison)}</div>
                         <div class="metric-label">Total SPAs Eligible for Renewal</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value">{format_percentage(para_completion_rate)}</div>
+                        <div class="metric-value">{format_percentage_with_diff(para_completion_rate, para_percentage_differences.get('spa_completion_rate', '0%'), has_comparison)}</div>
                         <div class="metric-label">SPA Completion Rate</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value">{format_number(teacher_results.get('total_prc_pru_eligible', 0))}</div>
+                        <div class="metric-value">{format_metric_with_diff(teacher_results.get('total_prc_pru_eligible', 0), teacher_differences.get('total_prc_pru_eligible', '0'), has_comparison)}</div>
                         <div class="metric-label">Total STEs (PRC/PRU) Eligible</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value">{format_percentage(teacher_completion_rate)}</div>
+                        <div class="metric-value">{format_percentage_with_diff(teacher_completion_rate, teacher_percentage_differences.get('ste_completion_rate', '0%'), has_comparison)}</div>
                         <div class="metric-label">STE Completion Rate</div>
                     </div>
                 </div>
@@ -840,19 +904,19 @@ def generate_html_report(para_results, teacher_results, chart_files, output_dir)
             <h2>Substitute Paraprofessionals (SPA) Analysis</h2>
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(para_results.get('total_eligible', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(para_results.get('total_eligible', 0), para_differences.get('total_eligible', '0'), has_comparison)}</div>
                     <div class="metric-label">Total SPAs Eligible for Renewal</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(para_results.get('total_complete', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(para_results.get('total_complete', 0), para_differences.get('total_complete', '0'), has_comparison)}</div>
                     <div class="metric-label">Total Completed Renewal</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(para_results.get('total_outstanding', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(para_results.get('total_outstanding', 0), para_differences.get('total_outstanding', '0'), has_comparison)}</div>
                     <div class="metric-label">Total Outstanding</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(para_results.get('ra_not_complete', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(para_results.get('ra_not_complete', 0), para_differences.get('ra_not_complete', '0'), has_comparison)}</div>
                     <div class="metric-label">RA NOT Complete</div>
                 </div>
             </div>
@@ -860,34 +924,34 @@ def generate_html_report(para_results, teacher_results, chart_files, output_dir)
             <h3>Requirements Analysis</h3>
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(para_results.get('ra_complete_other_outstanding', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(para_results.get('ra_complete_other_outstanding', 0), para_differences.get('ra_complete_other_outstanding', '0'), has_comparison)}</div>
                     <div class="metric-label">RA Complete, Other Requirements Outstanding</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(para_results.get('days_worked_only', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(para_results.get('days_worked_only', 0), para_differences.get('days_worked_only', '0'), has_comparison)}</div>
                     <div class="metric-label">Days Worked Only</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(para_results.get('atas_only', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(para_results.get('atas_only', 0), para_differences.get('atas_only', '0'), has_comparison)}</div>
                     <div class="metric-label">ATAS Only</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(para_results.get('autism_workshop_only', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(para_results.get('autism_workshop_only', 0), para_differences.get('autism_workshop_only', '0'), has_comparison)}</div>
                     <div class="metric-label">Autism Workshop Only</div>
                 </div>
             </div>
             
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(para_results.get('days_and_other_requirements', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(para_results.get('days_and_other_requirements', 0), para_differences.get('days_and_other_requirements', '0'), has_comparison)}</div>
                     <div class="metric-label">Days & ATAS/Autism/Other Requirements</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(para_results.get('total_suspended_2ss', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(para_results.get('total_suspended_2ss', 0), para_differences.get('total_suspended_2ss', '0'), has_comparison)}</div>
                     <div class="metric-label">Total Suspended 2SS</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(para_results.get('total_suspended_2sr', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(para_results.get('total_suspended_2sr', 0), para_differences.get('total_suspended_2sr', '0'), has_comparison)}</div>
                     <div class="metric-label">Total Suspended 2SR</div>
                 </div>
             </div>
@@ -897,19 +961,19 @@ def generate_html_report(para_results, teacher_results, chart_files, output_dir)
             <h2>Substitute Teachers (STE) Analysis</h2>
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(teacher_results.get('total_eligible', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('total_eligible', 0), teacher_differences.get('total_eligible', '0'), has_comparison)}</div>
                     <div class="metric-label">Total STEs Eligible for Renewal</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(teacher_results.get('total_prc_pru_eligible', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('total_prc_pru_eligible', 0), teacher_differences.get('total_prc_pru_eligible', '0'), has_comparison)}</div>
                     <div class="metric-label">Total Certified (PRC) and Uncertified (PRU) Eligible</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(teacher_results.get('total_prc_pru_complete', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('total_prc_pru_complete', 0), teacher_differences.get('total_prc_pru_complete', '0'), has_comparison)}</div>
                     <div class="metric-label">Total PRC & PRU Completed Renewal</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(teacher_results.get('total_prc_pru_outstanding', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('total_prc_pru_outstanding', 0), teacher_differences.get('total_prc_pru_outstanding', '0'), has_comparison)}</div>
                     <div class="metric-label">Total PRC & PRU Outstanding</div>
                 </div>
             </div>
@@ -917,30 +981,30 @@ def generate_html_report(para_results, teacher_results, chart_files, output_dir)
             <h3>PRC & PRU Requirements Analysis</h3>
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(teacher_results.get('prc_pru_ra_not_complete', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('prc_pru_ra_not_complete', 0), teacher_differences.get('prc_pru_ra_not_complete', '0'), has_comparison)}</div>
                     <div class="metric-label">PRC & PRU - RA Not Complete</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(teacher_results.get('prc_pru_met_ra_other_outstanding', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('prc_pru_met_ra_other_outstanding', 0), teacher_differences.get('prc_pru_met_ra_other_outstanding', '0'), has_comparison)}</div>
                     <div class="metric-label">PRC & PRU - Met RA, Other Requirements Outstanding</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(teacher_results.get('prc_pru_days_worked_only', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('prc_pru_days_worked_only', 0), teacher_differences.get('prc_pru_days_worked_only', '0'), has_comparison)}</div>
                     <div class="metric-label">Days Worked Only</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(teacher_results.get('prc_pru_autism_workshop_only', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('prc_pru_autism_workshop_only', 0), teacher_differences.get('prc_pru_autism_workshop_only', '0'), has_comparison)}</div>
                     <div class="metric-label">Autism Workshop Only</div>
                 </div>
             </div>
             
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(teacher_results.get('prc_pru_other_requirements_only', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('prc_pru_other_requirements_only', 0), teacher_differences.get('prc_pru_other_requirements_only', '0'), has_comparison)}</div>
                     <div class="metric-label">Other Requirements Only</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(teacher_results.get('prc_pru_days_and_other_requirements', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('prc_pru_days_and_other_requirements', 0), teacher_differences.get('prc_pru_days_and_other_requirements', '0'), has_comparison)}</div>
                     <div class="metric-label">Days & Other Requirements</div>
                 </div>
             </div>
@@ -948,30 +1012,30 @@ def generate_html_report(para_results, teacher_results, chart_files, output_dir)
             <h3>Special Categories</h3>
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(teacher_results.get('total_teachers_on_leave', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('total_teachers_on_leave', 0), teacher_differences.get('total_teachers_on_leave', '0'), has_comparison)}</div>
                     <div class="metric-label">Total Teachers On Leave (PRL)</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(teacher_results.get('total_retirees', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('total_retirees', 0), teacher_differences.get('total_retirees', '0'), has_comparison)}</div>
                     <div class="metric-label">Total Retirees (PRR)</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(teacher_results.get('total_prr_complete', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('total_prr_complete', 0), teacher_differences.get('total_prr_complete', '0'), has_comparison)}</div>
                     <div class="metric-label">Total PRR Completed Renewal</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(teacher_results.get('total_prr_outstanding', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('total_prr_outstanding', 0), teacher_differences.get('total_prr_outstanding', '0'), has_comparison)}</div>
                     <div class="metric-label">Total PRR Outstanding</div>
                 </div>
             </div>
             
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(teacher_results.get('total_suspended_2ss', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('total_suspended_2ss', 0), teacher_differences.get('total_suspended_2ss', '0'), has_comparison)}</div>
                     <div class="metric-label">Total Suspended 2SS</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_number(teacher_results.get('total_suspended_2sr', 0))}</div>
+                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('total_suspended_2sr', 0), teacher_differences.get('total_suspended_2sr', '0'), has_comparison)}</div>
                     <div class="metric-label">Total Suspended 2SR</div>
                 </div>
             </div>
@@ -1009,6 +1073,91 @@ def generate_html_report(para_results, teacher_results, chart_files, output_dir)
     
     return report_file
 
+def calculate_differences(new_results, old_results):
+    """
+    Calculate differences between new and old results
+    
+    Args:
+        new_results (dict): New analysis results
+        old_results (dict): Old analysis results
+        
+    Returns:
+        dict: Differences with + or - indicators
+    """
+    differences = {}
+    
+    for key in new_results:
+        new_val = new_results.get(key, 0)
+        old_val = old_results.get(key, 0)
+        diff = new_val - old_val
+        
+        if diff > 0:
+            differences[key] = f"+{diff:,}"
+        elif diff < 0:
+            differences[key] = f"{diff:,}"
+        else:
+            differences[key] = "0"
+    
+    return differences
+
+def calculate_percentage_differences(new_results, old_results):
+    """
+    Calculate percentage differences for completion rates
+    
+    Args:
+        new_results (dict): New analysis results
+        old_results (dict): Old analysis results
+        
+    Returns:
+        dict: Percentage differences with + or - indicators
+    """
+    differences = {}
+    
+    # Calculate SPA completion rate difference
+    new_spa_rate = (new_results.get('total_complete', 0) / 
+                   max(new_results.get('total_eligible', 1), 1) * 100)
+    old_spa_rate = (old_results.get('total_complete', 0) / 
+                   max(old_results.get('total_eligible', 1), 1) * 100)
+    spa_diff = new_spa_rate - old_spa_rate
+    
+    if spa_diff > 0:
+        differences['spa_completion_rate'] = f"+{spa_diff:.1f}%"
+    elif spa_diff < 0:
+        differences['spa_completion_rate'] = f"{spa_diff:.1f}%"
+    else:
+        differences['spa_completion_rate'] = "0%"
+    
+    return differences
+
+def calculate_teacher_percentage_differences(new_results, old_results):
+    """
+    Calculate teacher percentage differences for completion rates
+    
+    Args:
+        new_results (dict): New teacher analysis results
+        old_results (dict): Old teacher analysis results
+        
+    Returns:
+        dict: Teacher percentage differences with + or - indicators
+    """
+    differences = {}
+    
+    # Calculate STE completion rate difference
+    new_ste_rate = (new_results.get('total_prc_pru_complete', 0) / 
+                   max(new_results.get('total_prc_pru_eligible', 1), 1) * 100)
+    old_ste_rate = (old_results.get('total_prc_pru_complete', 0) / 
+                   max(old_results.get('total_prc_pru_eligible', 1), 1) * 100)
+    ste_diff = new_ste_rate - old_ste_rate
+    
+    if ste_diff > 0:
+        differences['ste_completion_rate'] = f"+{ste_diff:.1f}%"
+    elif ste_diff < 0:
+        differences['ste_completion_rate'] = f"{ste_diff:.1f}%"
+    else:
+        differences['ste_completion_rate'] = "0%"
+    
+    return differences
+
 def main():
     """
     Main execution function
@@ -1017,9 +1166,13 @@ def main():
     print("NYCDOE Substitute Renewal Analytics Dashboard")
     print("=" * 60)
     
-    # Set up paths
+    # Set up paths for current (new) data
     para_csv_path = os.path.join(RENEWAL_WORKSPACE, "substitute_paraprofessionals.csv")
     teacher_csv_path = os.path.join(RENEWAL_WORKSPACE, "substitute_teachers.csv")
+    
+    # Set up paths for old data (with "_old" suffix)
+    para_old_csv_path = os.path.join(RENEWAL_WORKSPACE, "substitute_paraprofessionals_old.csv")
+    teacher_old_csv_path = os.path.join(RENEWAL_WORKSPACE, "substitute_teachers_old.csv")
     
     try:
         # Check if CSV files exist
@@ -1031,18 +1184,31 @@ def main():
             print(f"Warning: Teacher CSV not found at {teacher_csv_path}")
             print("Please place the substitute teacher CSV file in the Renewal directory")
             
+        # Check for old data files
+        has_old_para = os.path.exists(para_old_csv_path)
+        has_old_teacher = os.path.exists(teacher_old_csv_path)
+        
+        if has_old_para or has_old_teacher:
+            print(f"\n📊 Comparison Mode: Old data files detected")
+            print(f"  Para Old Data: {'✓' if has_old_para else '❌'}")
+            print(f"  Teacher Old Data: {'✓' if has_old_teacher else '❌'}")
+        else:
+            print(f"\n📊 Standard Mode: No old data files found for comparison")
+        
         # Initialize results dictionaries
         para_results = {}
         teacher_results = {}
+        para_old_results = {}
+        teacher_old_results = {}
         
-        # Load and analyze paraprofessional data
+        # Load and analyze current paraprofessional data
         if os.path.exists(para_csv_path):
-            print("\nAnalyzing Substitute Paraprofessional Data...")
-            df_para = load_csv_data(para_csv_path, "para")
+            print("\nAnalyzing Current Substitute Paraprofessional Data...")
+            df_para = load_csv_data(para_csv_path, "para (current)")
             para_results = analyze_substitute_paraprofessionals(df_para)
-            print("✓ Paraprofessional analysis completed")
+            print("✓ Current paraprofessional analysis completed")
         else:
-            print("⚠ Skipping paraprofessional analysis - CSV file not found")
+            print("⚠ Skipping current paraprofessional analysis - CSV file not found")
             df_para = None
             # Initialize with default values
             para_results = {key: 0 for key in [
@@ -1052,14 +1218,24 @@ def main():
                 'total_suspended_2sr'
             ]}
         
-        # Load and analyze teacher data
-        if os.path.exists(teacher_csv_path):
-            print("\nAnalyzing Substitute Teacher Data...")
-            df_teacher = load_csv_data(teacher_csv_path, "teacher")
-            teacher_results = analyze_substitute_teachers(df_teacher)
-            print("✓ Teacher analysis completed")
+        # Load and analyze old paraprofessional data if available
+        if has_old_para:
+            print("\nAnalyzing Old Substitute Paraprofessional Data...")
+            df_para_old = load_csv_data(para_old_csv_path, "para (old)")
+            para_old_results = analyze_substitute_paraprofessionals(df_para_old)
+            print("✓ Old paraprofessional analysis completed")
         else:
-            print("⚠ Skipping teacher analysis - CSV file not found")
+            print("⚠ No old paraprofessional data available for comparison")
+            para_old_results = {key: 0 for key in para_results.keys()}
+        
+        # Load and analyze current teacher data
+        if os.path.exists(teacher_csv_path):
+            print("\nAnalyzing Current Substitute Teacher Data...")
+            df_teacher = load_csv_data(teacher_csv_path, "teacher (current)")
+            teacher_results = analyze_substitute_teachers(df_teacher)
+            print("✓ Current teacher analysis completed")
+        else:
+            print("⚠ Skipping current teacher analysis - CSV file not found")
             df_teacher = None
             # Initialize with default values
             teacher_results = {key: 0 for key in [
@@ -1070,14 +1246,41 @@ def main():
                 'total_prr_complete', 'total_prr_outstanding', 'total_suspended_2ss', 'total_suspended_2sr'
             ]}
         
+        # Load and analyze old teacher data if available
+        if has_old_teacher:
+            print("\nAnalyzing Old Substitute Teacher Data...")
+            df_teacher_old = load_csv_data(teacher_old_csv_path, "teacher (old)")
+            teacher_old_results = analyze_substitute_teachers(df_teacher_old)
+            print("✓ Old teacher analysis completed")
+        else:
+            print("⚠ No old teacher data available for comparison")
+            teacher_old_results = {key: 0 for key in teacher_results.keys()}
+        
+        # Calculate differences
+        para_differences = calculate_differences(para_results, para_old_results)
+        teacher_differences = calculate_differences(teacher_results, teacher_old_results)
+        
+        # Calculate percentage differences for completion rates
+        para_percentage_differences = calculate_percentage_differences(para_results, para_old_results)
+        teacher_percentage_differences = calculate_teacher_percentage_differences(teacher_results, teacher_old_results)
+        
         # Create visualizations
         print("\nGenerating Visualizations...")
         chart_files = create_visualization_charts(para_results, teacher_results, OUTPUT_DIR)
         print("✓ Visualization charts created")
         
-        # Generate HTML report
+        # Generate HTML report with differences
         print("\nGenerating HTML Report...")
-        report_file = generate_html_report(para_results, teacher_results, chart_files, OUTPUT_DIR)
+        has_comparison_data = (has_old_para or has_old_teacher)
+        report_file = generate_html_report(
+            para_results, teacher_results, 
+            para_differences, teacher_differences,
+            para_percentage_differences, teacher_percentage_differences,
+            chart_files, OUTPUT_DIR,
+            has_comparison=has_comparison_data,
+            para_old_results=para_old_results, 
+            teacher_old_results=teacher_old_results
+        )
         print(f"✓ HTML report generated: {report_file}")
         
         # Print summary
@@ -1085,14 +1288,39 @@ def main():
         print("ANALYSIS SUMMARY")
         print("=" * 60)
         print(f"Substitute Paraprofessionals:")
-        print(f"  • Total Eligible: {format_number(para_results.get('total_eligible', 0))}")
-        print(f"  • Completed: {format_number(para_results.get('total_complete', 0))}")
-        print(f"  • Outstanding: {format_number(para_results.get('total_outstanding', 0))}")
+        print(f"  • Total Eligible: {format_number(para_results.get('total_eligible', 0))}" + 
+              (f" ({para_differences.get('total_eligible', '0')})" if has_comparison_data and para_differences.get('total_eligible', '0') != '0' else ""))
+        print(f"  • Completed: {format_number(para_results.get('total_complete', 0))}" + 
+              (f" ({para_differences.get('total_complete', '0')})" if has_comparison_data and para_differences.get('total_complete', '0') != '0' else ""))
+        print(f"  • Outstanding: {format_number(para_results.get('total_outstanding', 0))}" + 
+              (f" ({para_differences.get('total_outstanding', '0')})" if has_comparison_data and para_differences.get('total_outstanding', '0') != '0' else ""))
+        
+        # Calculate and display completion rate
+        para_completion_rate = (para_results.get('total_complete', 0) / max(para_results.get('total_eligible', 1), 1) * 100)
+        completion_rate_text = f"  • Completion Rate: {format_percentage(para_completion_rate)}"
+        if has_comparison_data and para_percentage_differences.get('spa_completion_rate', '0%') != '0%':
+            completion_rate_text += f" ({para_percentage_differences.get('spa_completion_rate', '0%')})"
+        print(completion_rate_text)
         
         print(f"\nSubstitute Teachers:")
-        print(f"  • Total Eligible: {format_number(teacher_results.get('total_eligible', 0))}")
-        print(f"  • PRC/PRU Eligible: {format_number(teacher_results.get('total_prc_pru_eligible', 0))}")
-        print(f"  • PRC/PRU Completed: {format_number(teacher_results.get('total_prc_pru_complete', 0))}")
+        print(f"  • Total Eligible: {format_number(teacher_results.get('total_eligible', 0))}" + 
+              (f" ({teacher_differences.get('total_eligible', '0')})" if has_comparison_data and teacher_differences.get('total_eligible', '0') != '0' else ""))
+        print(f"  • PRC/PRU Eligible: {format_number(teacher_results.get('total_prc_pru_eligible', 0))}" + 
+              (f" ({teacher_differences.get('total_prc_pru_eligible', '0')})" if has_comparison_data and teacher_differences.get('total_prc_pru_eligible', '0') != '0' else ""))
+        print(f"  • PRC/PRU Completed: {format_number(teacher_results.get('total_prc_pru_complete', 0))}" + 
+              (f" ({teacher_differences.get('total_prc_pru_complete', '0')})" if has_comparison_data and teacher_differences.get('total_prc_pru_complete', '0') != '0' else ""))
+        
+        # Calculate and display completion rate
+        teacher_completion_rate = (teacher_results.get('total_prc_pru_complete', 0) / max(teacher_results.get('total_prc_pru_eligible', 1), 1) * 100)
+        teacher_completion_rate_text = f"  • PRC/PRU Completion Rate: {format_percentage(teacher_completion_rate)}"
+        if has_comparison_data and teacher_percentage_differences.get('ste_completion_rate', '0%') != '0%':
+            teacher_completion_rate_text += f" ({teacher_percentage_differences.get('ste_completion_rate', '0%')})"
+        print(teacher_completion_rate_text)
+        
+        if has_comparison_data:
+            print(f"\n📊 Comparison Summary:")
+            print(f"  • Old data files processed for comparison analysis")
+            print(f"  • Differences shown with +/- indicators in report and summary")
         
         print(f"\nOutput Files:")
         print(f"  • Main Report: {report_file}")

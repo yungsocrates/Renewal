@@ -5,6 +5,29 @@ All notable changes to the NYCDOE Substitute Renewal Analytics Dashboard will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-07-02
+
+### Added
+- **Historical Data Comparison**: Support for comparing current data with historical data
+- **Automatic Old File Detection**: Automatically detects and processes "_old" CSV files
+- **Change Indicators**: Visual ▲/▼ indicators in HTML reports showing increases/decreases
+- **Completion Rate Tracking**: Percentage point changes for SPA and STE completion rates
+- **Comparison Mode**: Terminal output shows changes with +/- indicators
+- **Enhanced HTML Dashboard**: Updated dashboard with difference indicators and trend analysis
+- **Comprehensive Metrics Comparison**: All analysis categories now support historical comparison
+
+### Enhanced
+- HTML report generation now includes historical comparison data
+- Terminal summary output shows changes when historical data is available
+- Error handling for missing old data files
+- Documentation updated with comparison mode instructions
+
+### Technical Improvements
+- Added `calculate_differences()` function for numeric change calculations
+- Added `calculate_percentage_differences()` functions for completion rate tracking
+- Enhanced `generate_html_report()` to display comparison data
+- Updated main analysis pipeline to support dual-dataset processing
+
 ## [1.0.0] - 2025-07-01
 
 ### Added

@@ -1,6 +1,6 @@
 # GitHub and Netlify Deployment Guide
 
-This guide will help you deploy the NYCDOE Substitute Renewal Analytics Dashboard to GitHub and then publish it to Netlify for web access.
+This guide will help you deploy the NYC Public Schools Substitute Renewal Analytics Dashboard to GitHub and then publish it to Netlify for web access.
 
 ## 🚀 Quick Start
 
@@ -11,18 +11,18 @@ This guide will help you deploy the NYCDOE Substitute Renewal Analytics Dashboar
    cd c:\Users\OFerreira3\Documents\Renewal
    git init
    git add .
-   git commit -m "Initial commit: NYCDOE Substitute Renewal Analytics Dashboard"
+   git commit -m "Initial commit: NYC Public Schools Substitute Renewal Analytics Dashboard"
    ```
 
 2. **Create GitHub repository**:
    - Go to [GitHub.com](https://github.com) and create a new repository
-   - Name it: `nycdoe-substitute-renewal-analytics`
+   - Name it: `nyc-public-schools-substitute-renewal-analytics`
    - Make it public for Netlify deployment
    - Don't initialize with README (we already have one)
 
 3. **Connect local repository to GitHub**:
    ```bash
-   git remote add origin https://github.com/YOUR_USERNAME/nycdoe-substitute-renewal-analytics.git
+   git remote add origin https://github.com/YOUR_USERNAME/nyc-public-schools-substitute-renewal-analytics.git
    git branch -M main
    git push -u origin main
    ```
@@ -42,7 +42,7 @@ This guide will help you deploy the NYCDOE Substitute Renewal Analytics Dashboar
 ## 📁 Project Structure Overview
 
 ```
-nycdoe-substitute-renewal-analytics/
+nyc-public-schools-substitute-renewal-analytics/
 ├── substitute_renewal_analytics.py    # Main analytics script
 ├── requirements.txt                   # Python dependencies
 ├── README.md                         # Project documentation

@@ -5,6 +5,27 @@ All notable changes to the NYCDOE Substitute Renewal Analytics Dashboard will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-01-18
+
+### Added
+- **Standardized NYC Public Schools Branding**: Consistent header/footer styling with official white logo
+- **Professional Header Layout**: Bolded headers with proper logo sizing and positioning  
+- **Dual Contact Footer**: Added both subparajobs@schools.nyc.gov and subteacherjobs@schools.nyc.gov contact emails
+- **DOE Property Statement**: Professional footer with department ownership acknowledgment
+
+### Enhanced
+- **Updated Report Titles**: Removed "NYCDOE" in favor of "NYC Public Schools" for official branding
+- **Logo Integration**: Added copy_logo_to_output() function for consistent logo placement
+- **Header HTML Generation**: Standardized get_header_html() function for uniform appearance
+- **Professional Footer**: Enhanced get_professional_footer() with contact information and branding
+- **Visual Design**: Improved header layout with proper spacing and proportional logo sizing
+
+### Fixed
+- Header width and alignment issues
+- Logo size optimization (reduced to 80px for professional appearance)
+- Removed duplicate and conflicting CSS rules
+- Improved header container layout and positioning
+
 ## [1.1.0] - 2025-07-02
 
 ### Added

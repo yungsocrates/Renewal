@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-NYCDOE Substitute Renewal Analytics Dashboard
-============================================
+NYC Public Schools Substitute Renewal Analytics Dashboard
+=========================================================
 
 Comprehensive analytics tool for analyzing substitute teacher and paraprofessional renewal data.
 Processes CSV data to generate detailed reports on renewal status, requirements completion,
@@ -759,27 +759,74 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
     # Comparison header text
     comparison_text = ""
     if has_comparison:
-        comparison_text = "<p><strong>📊 Comparison Mode:</strong> Changes from previous data shown with ▲/▼ indicators</p>"
+        comparison_text = "Changes from previous data shown with ▲/▼ indicators"
     
     html_content = f"""
     <!DOCTYPE html>
     <html>
     <head>
-        <title>NYCDOE Substitute Renewal Analytics Dashboard</title>
+        <title>NYC Public Schools Substitute Renewal Analytics Dashboard</title>
         <style>
             body {{ 
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                margin: 20px; 
+                margin: 0;
+                padding: 0; 
                 background-color: #f5f5f5;
             }}
             .header {{ 
-                background: linear-gradient(135deg, #2E86AB, #A23B72);
+                background: linear-gradient(135deg, #2C5282, #1A365D);
                 color: white; 
-                text-align: center; 
-                padding: 30px; 
-                border-radius: 10px;
-                margin-bottom: 30px;
+                padding: 20px;
+                margin: 0;
                 box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }}
+            .header-content {{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 0 20px;
+            }}
+            .header-text {{
+                flex: 1;
+                text-align: left;
+                margin-right: 30px;
+            }}
+            .header-text h1 {{
+                margin: 0;
+                font-size: 2.2em;
+                font-weight: 700;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                line-height: 1.2;
+            }}
+            .header-text h2 {{
+                margin: 8px 0;
+                font-size: 1.2em;
+                font-weight: 600;
+                opacity: 0.9;
+                line-height: 1.3;
+            }}
+            .header-text .date-info {{
+                margin: 8px 0 0 0;
+                font-size: 1.0em;
+                opacity: 0.8;
+            }}
+            .header-logo {{
+                flex-shrink: 0;
+                display: flex;
+                align-items: center;
+            }}
+            .logo {{
+                height: 80px;
+                width: auto;
+                filter: brightness(1.1);
+                margin-left: 20px;
+            }}
+            .content {{
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 20px;
             }}
             .section {{ 
                 background: white;
@@ -789,9 +836,15 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             }}
             .section h2 {{ 
-                color: #2E86AB; 
-                border-bottom: 3px solid #2E86AB; 
+                color: #2C5282; 
+                border-bottom: 3px solid #2C5282; 
                 padding-bottom: 10px;
+                font-weight: 700;
+                margin-top: 0;
+            }}
+            .section h3 {{
+                color: #2C5282;
+                font-weight: 600;
             }}
             .metrics-grid {{ 
                 display: grid; 
@@ -802,17 +855,23 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
             .metric-card {{ 
                 background: #f8f9fa; 
                 padding: 20px; 
-                border-left: 5px solid #2E86AB;
+                border-left: 5px solid #2C5282;
                 border-radius: 5px;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }}
+            .metric-card:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
             }}
             .metric-value {{ 
                 font-size: 2em; 
                 font-weight: bold; 
-                color: #2E86AB; 
+                color: #2C5282; 
             }}
             .metric-label {{ 
                 color: #666; 
                 margin-top: 5px; 
+                font-weight: 500;
             }}
             .chart-container {{ 
                 margin: 20px 0; 
@@ -854,28 +913,38 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
                 text-align: left; 
             }}
             th {{ 
-                background-color: #2E86AB; 
-                color: white; 
+                background-color: #2C5282; 
+                color: white;
+                font-weight: 600;
             }}
             .footer {{
-                background-color: #2E86AB;
+                background-color: #2C5282;
                 color: white;
                 text-align: center;
-                padding: 20px;
+                padding: 30px 20px;
                 margin-top: 40px;
-                border-radius: 10px;
+                font-size: 1.1em;
+            }}
+            .footer p {{
+                margin: 8px 0;
+            }}
+            .footer a {{
+                color: #e3f2fd;
+                text-decoration: none;
+            }}
+            .footer a:hover {{
+                text-decoration: underline;
             }}
         </style>
     </head>
     <body>
-        <div class="header">
-            <h1>NYCDOE Substitute Renewal Analytics Dashboard</h1>
-            <p>Comprehensive Analysis of Substitute Teacher and Paraprofessional Renewal Data</p>
-            <p>Generated on: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
-            {comparison_text}
-        </div>
+        {get_header_html("Horizontal_logo_White_PublicSchools.png", 
+                        "Substitute Renewal Analytics Dashboard", 
+                        "Comprehensive Analysis of Substitute Teacher and Paraprofessional Renewal Data", 
+                        f"Generated on: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}{' | ' + comparison_text if comparison_text else ''}")}
 
-        <div class="section">
+        <div class="content">
+            <div class="section">
             <h2>Executive Summary</h2>
             <div class="summary-box">
                 <h3>Key Performance Indicators</h3>
@@ -1058,11 +1127,9 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
                 <iframe src="combined_comparison.html" width="1200" height="520" frameborder="0"></iframe>
             </div>
         </div>
-        
-        <div class="footer">
-            <p>Generated by NYCDOE Substitute Renewal Analytics Dashboard</p>
-            <p>HR School Support Analysis Team | {datetime.now().strftime('%Y')}</p>
         </div>
+        
+        {get_professional_footer(['subparajobs@schools.nyc.gov', 'subteacherjobs@schools.nyc.gov'])}
     </body>
     </html>
     """
@@ -1072,6 +1139,72 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
         f.write(html_content)
     
     return report_file
+
+def copy_logo_to_output(output_dir):
+    """
+    Copy the NYC Public Schools logo to the output directory for deployment
+    
+    Args:
+        output_dir (str): Output directory path
+    """
+    import shutil
+    logo_source = os.path.join(RENEWAL_WORKSPACE, "Horizontal_logo_White_PublicSchools.png")
+    logo_dest = os.path.join(output_dir, "Horizontal_logo_White_PublicSchools.png")
+    
+    if os.path.exists(logo_source):
+        shutil.copy2(logo_source, logo_dest)
+        print(f"✓ Logo copied to output directory: {logo_dest}")
+    else:
+        print(f"⚠ Warning: Logo not found at {logo_source}")
+
+def get_header_html(logo_path, main_title, subtitle, date_info):
+    """
+    Generate standardized header HTML with NYC Public Schools branding
+    
+    Args:
+        logo_path (str): Path to the logo file
+        main_title (str): Main title text
+        subtitle (str): Subtitle text
+        date_info (str): Date information text
+        
+    Returns:
+        str: HTML content for the header
+    """
+    return f"""
+    <div class="header">
+        <div class="header-content">
+            <div class="header-text">
+                <h1>{main_title}</h1>
+                <h2>{subtitle}</h2>
+                <p class="date-info">{date_info}</p>
+            </div>
+            <div class="header-logo">
+                <img src="{logo_path}" alt="NYC Public Schools" class="logo">
+            </div>
+        </div>
+    </div>"""
+
+def get_professional_footer(contact_emails=None):
+    """
+    Generate standardized footer HTML with NYC Public Schools branding
+    
+    Args:
+        contact_emails (list): List of contact email addresses
+        
+    Returns:
+        str: HTML content for the footer
+    """
+    contact_info = ""
+    if contact_emails:
+        contact_links = " | ".join([f'<a href="mailto:{email}" style="color: #e3f2fd;">{email}</a>' for email in contact_emails])
+        contact_info = f"<p>Contact: {contact_links}</p>"
+    
+    return f"""
+    <div class="footer">
+        <p>Property of the New York City Department of Education</p>
+        {contact_info}
+        <p>HR School Support Analysis Team | {datetime.now().strftime('%Y')}</p>
+    </div>"""
 
 def calculate_differences(new_results, old_results):
     """
@@ -1163,7 +1296,7 @@ def main():
     Main execution function
     """
     print("=" * 60)
-    print("NYCDOE Substitute Renewal Analytics Dashboard")
+    print("NYC Public Schools Substitute Renewal Analytics Dashboard")
     print("=" * 60)
     
     # Set up paths for current (new) data
@@ -1175,6 +1308,10 @@ def main():
     teacher_old_csv_path = os.path.join(RENEWAL_WORKSPACE, "substitute_teachers_old.csv")
     
     try:
+        # Create output directory and copy logo
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
+        copy_logo_to_output(OUTPUT_DIR)
+        
         # Check if CSV files exist
         if not os.path.exists(para_csv_path):
             print(f"Warning: Paraprofessional CSV not found at {para_csv_path}")

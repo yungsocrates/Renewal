@@ -2,21 +2,68 @@
     <!DOCTYPE html>
     <html>
     <head>
-        <title>NYCDOE Substitute Renewal Analytics Dashboard</title>
+        <title>NYC Public Schools Substitute Renewal Analytics Dashboard</title>
         <style>
             body { 
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                margin: 20px; 
+                margin: 0;
+                padding: 0; 
                 background-color: #f5f5f5;
             }
             .header { 
-                background: linear-gradient(135deg, #2E86AB, #A23B72);
+                background: linear-gradient(135deg, #2C5282, #1A365D);
                 color: white; 
-                text-align: center; 
-                padding: 30px; 
-                border-radius: 10px;
-                margin-bottom: 30px;
+                padding: 20px;
+                margin: 0;
                 box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            }
+            .header-content {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 0 20px;
+            }
+            .header-text {
+                flex: 1;
+                text-align: left;
+                margin-right: 30px;
+            }
+            .header-text h1 {
+                margin: 0;
+                font-size: 2.2em;
+                font-weight: 700;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                line-height: 1.2;
+            }
+            .header-text h2 {
+                margin: 8px 0;
+                font-size: 1.2em;
+                font-weight: 600;
+                opacity: 0.9;
+                line-height: 1.3;
+            }
+            .header-text .date-info {
+                margin: 8px 0 0 0;
+                font-size: 1.0em;
+                opacity: 0.8;
+            }
+            .header-logo {
+                flex-shrink: 0;
+                display: flex;
+                align-items: center;
+            }
+            .logo {
+                height: 80px;
+                width: auto;
+                filter: brightness(1.1);
+                margin-left: 20px;
+            }
+            .content {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 20px;
             }
             .section { 
                 background: white;
@@ -26,9 +73,15 @@
                 box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             }
             .section h2 { 
-                color: #2E86AB; 
-                border-bottom: 3px solid #2E86AB; 
+                color: #2C5282; 
+                border-bottom: 3px solid #2C5282; 
                 padding-bottom: 10px;
+                font-weight: 700;
+                margin-top: 0;
+            }
+            .section h3 {
+                color: #2C5282;
+                font-weight: 600;
             }
             .metrics-grid { 
                 display: grid; 
@@ -39,17 +92,23 @@
             .metric-card { 
                 background: #f8f9fa; 
                 padding: 20px; 
-                border-left: 5px solid #2E86AB;
+                border-left: 5px solid #2C5282;
                 border-radius: 5px;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+            .metric-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
             }
             .metric-value { 
                 font-size: 2em; 
                 font-weight: bold; 
-                color: #2E86AB; 
+                color: #2C5282; 
             }
             .metric-label { 
                 color: #666; 
                 margin-top: 5px; 
+                font-weight: 500;
             }
             .chart-container { 
                 margin: 20px 0; 
@@ -91,28 +150,47 @@
                 text-align: left; 
             }
             th { 
-                background-color: #2E86AB; 
-                color: white; 
+                background-color: #2C5282; 
+                color: white;
+                font-weight: 600;
             }
             .footer {
-                background-color: #2E86AB;
+                background-color: #2C5282;
                 color: white;
                 text-align: center;
-                padding: 20px;
+                padding: 30px 20px;
                 margin-top: 40px;
-                border-radius: 10px;
+                font-size: 1.1em;
+            }
+            .footer p {
+                margin: 8px 0;
+            }
+            .footer a {
+                color: #e3f2fd;
+                text-decoration: none;
+            }
+            .footer a:hover {
+                text-decoration: underline;
             }
         </style>
     </head>
     <body>
-        <div class="header">
-            <h1>NYCDOE Substitute Renewal Analytics Dashboard</h1>
-            <p>Comprehensive Analysis of Substitute Teacher and Paraprofessional Renewal Data</p>
-            <p>Generated on: July 02, 2025 at 10:05 AM</p>
-            <p><strong>📊 Comparison Mode:</strong> Changes from previous data shown with ▲/▼ indicators</p>
+        
+    <div class="header">
+        <div class="header-content">
+            <div class="header-text">
+                <h1>Substitute Renewal Analytics Dashboard</h1>
+                <h2>Comprehensive Analysis of Substitute Teacher and Paraprofessional Renewal Data</h2>
+                <p class="date-info">Generated on: July 03, 2025 at 12:38 PM | Changes from previous data shown with ▲/▼ indicators</p>
+            </div>
+            <div class="header-logo">
+                <img src="Horizontal_logo_White_PublicSchools.png" alt="NYC Public Schools" class="logo">
+            </div>
         </div>
+    </div>
 
-        <div class="section">
+        <div class="content">
+            <div class="section">
             <h2>Executive Summary</h2>
             <div class="summary-box">
                 <h3>Key Performance Indicators</h3>
@@ -122,15 +200,15 @@
                         <div class="metric-label">Total SPAs Eligible for Renewal</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value">43.6%<br><small style="color: #28a745; font-weight: bold;">▲ +1.4%</small></div>
+                        <div class="metric-value">44.3%<br><small style="color: #28a745; font-weight: bold;">▲ +0.7%</small></div>
                         <div class="metric-label">SPA Completion Rate</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value">11,042<br><small style="color: #dc3545; font-weight: bold;">▼ -1</small></div>
+                        <div class="metric-value">11,042</div>
                         <div class="metric-label">Total STEs (PRC/PRU) Eligible</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value">52.0%<br><small style="color: #28a745; font-weight: bold;">▲ +1.5%</small></div>
+                        <div class="metric-value">52.4%<br><small style="color: #28a745; font-weight: bold;">▲ +0.3%</small></div>
                         <div class="metric-label">STE Completion Rate</div>
                     </div>
                 </div>
@@ -145,15 +223,15 @@
                     <div class="metric-label">Total SPAs Eligible for Renewal</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">6,235<br><small style="color: #28a745; font-weight: bold;">▲ +202</small></div>
+                    <div class="metric-value">6,336<br><small style="color: #28a745; font-weight: bold;">▲ +101</small></div>
                     <div class="metric-label">Total Completed Renewal</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">8,077<br><small style="color: #dc3545; font-weight: bold;">▼ -202</small></div>
+                    <div class="metric-value">7,976<br><small style="color: #dc3545; font-weight: bold;">▼ -101</small></div>
                     <div class="metric-label">Total Outstanding</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">2,134<br><small style="color: #dc3545; font-weight: bold;">▼ -134</small></div>
+                    <div class="metric-value">2,052<br><small style="color: #dc3545; font-weight: bold;">▼ -82</small></div>
                     <div class="metric-label">RA NOT Complete</div>
                 </div>
             </div>
@@ -161,15 +239,15 @@
             <h3>Requirements Analysis</h3>
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">4,921<br><small style="color: #dc3545; font-weight: bold;">▼ -67</small></div>
+                    <div class="metric-value">4,906<br><small style="color: #dc3545; font-weight: bold;">▼ -15</small></div>
                     <div class="metric-label">RA Complete, Other Requirements Outstanding</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">1,458<br><small style="color: #28a745; font-weight: bold;">▲ +10</small></div>
+                    <div class="metric-value">1,466<br><small style="color: #28a745; font-weight: bold;">▲ +8</small></div>
                     <div class="metric-label">Days Worked Only</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">1,624<br><small style="color: #dc3545; font-weight: bold;">▼ -8</small></div>
+                    <div class="metric-value">1,591<br><small style="color: #dc3545; font-weight: bold;">▼ -33</small></div>
                     <div class="metric-label">ATAS Only</div>
                 </div>
                 <div class="metric-card">
@@ -180,11 +258,11 @@
             
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">29<br><small style="color: #dc3545; font-weight: bold;">▼ -2</small></div>
+                    <div class="metric-value">29</div>
                     <div class="metric-label">Days & ATAS/Autism/Other Requirements</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">314<br><small style="color: #dc3545; font-weight: bold;">▼ -14</small></div>
+                    <div class="metric-value">312<br><small style="color: #dc3545; font-weight: bold;">▼ -2</small></div>
                     <div class="metric-label">Total Suspended 2SS</div>
                 </div>
                 <div class="metric-card">
@@ -198,19 +276,19 @@
             <h2>Substitute Teachers (STE) Analysis</h2>
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">13,561<br><small style="color: #dc3545; font-weight: bold;">▼ -1</small></div>
+                    <div class="metric-value">13,561</div>
                     <div class="metric-label">Total STEs Eligible for Renewal</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">11,042<br><small style="color: #dc3545; font-weight: bold;">▼ -1</small></div>
+                    <div class="metric-value">11,042</div>
                     <div class="metric-label">Total Certified (PRC) and Uncertified (PRU) Eligible</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">5,747<br><small style="color: #28a745; font-weight: bold;">▲ +166</small></div>
+                    <div class="metric-value">5,785<br><small style="color: #28a745; font-weight: bold;">▲ +38</small></div>
                     <div class="metric-label">Total PRC & PRU Completed Renewal</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">5,295<br><small style="color: #dc3545; font-weight: bold;">▼ -167</small></div>
+                    <div class="metric-value">5,257<br><small style="color: #dc3545; font-weight: bold;">▼ -38</small></div>
                     <div class="metric-label">Total PRC & PRU Outstanding</div>
                 </div>
             </div>
@@ -218,15 +296,15 @@
             <h3>PRC & PRU Requirements Analysis</h3>
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">1,940<br><small style="color: #dc3545; font-weight: bold;">▼ -61</small></div>
+                    <div class="metric-value">1,908<br><small style="color: #dc3545; font-weight: bold;">▼ -32</small></div>
                     <div class="metric-label">PRC & PRU - RA Not Complete</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">3,355<br><small style="color: #dc3545; font-weight: bold;">▼ -106</small></div>
+                    <div class="metric-value">3,349<br><small style="color: #dc3545; font-weight: bold;">▼ -6</small></div>
                     <div class="metric-label">PRC & PRU - Met RA, Other Requirements Outstanding</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">1,300<br><small style="color: #28a745; font-weight: bold;">▲ +11</small></div>
+                    <div class="metric-value">1,302<br><small style="color: #28a745; font-weight: bold;">▲ +2</small></div>
                     <div class="metric-label">Days Worked Only</div>
                 </div>
                 <div class="metric-card">
@@ -237,7 +315,7 @@
             
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">1,574<br><small style="color: #dc3545; font-weight: bold;">▼ -117</small></div>
+                    <div class="metric-value">1,565<br><small style="color: #dc3545; font-weight: bold;">▼ -9</small></div>
                     <div class="metric-label">Other Requirements Only</div>
                 </div>
                 <div class="metric-card">
@@ -257,18 +335,18 @@
                     <div class="metric-label">Total Retirees (PRR)</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">1,901<br><small style="color: #28a745; font-weight: bold;">▲ +8</small></div>
+                    <div class="metric-value">1,908<br><small style="color: #28a745; font-weight: bold;">▲ +7</small></div>
                     <div class="metric-label">Total PRR Completed Renewal</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">489<br><small style="color: #dc3545; font-weight: bold;">▼ -8</small></div>
+                    <div class="metric-value">482<br><small style="color: #dc3545; font-weight: bold;">▼ -7</small></div>
                     <div class="metric-label">Total PRR Outstanding</div>
                 </div>
             </div>
             
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">325<br><small style="color: #dc3545; font-weight: bold;">▼ -5</small></div>
+                    <div class="metric-value">325</div>
                     <div class="metric-label">Total Suspended 2SS</div>
                 </div>
                 <div class="metric-card">
@@ -295,11 +373,14 @@
                 <iframe src="combined_comparison.html" width="1200" height="520" frameborder="0"></iframe>
             </div>
         </div>
-        
-        <div class="footer">
-            <p>Generated by NYCDOE Substitute Renewal Analytics Dashboard</p>
-            <p>HR School Support Analysis Team | 2025</p>
         </div>
+        
+        
+    <div class="footer">
+        <p>Property of the New York City Department of Education</p>
+        <p>Contact: <a href="mailto:subparajobs@schools.nyc.gov" style="color: #e3f2fd;">subparajobs@schools.nyc.gov</a> | <a href="mailto:subteacherjobs@schools.nyc.gov" style="color: #e3f2fd;">subteacherjobs@schools.nyc.gov</a></p>
+        <p>HR School Support Analysis Team | 2025</p>
+    </div>
     </body>
     </html>
     

@@ -1,16 +1,17 @@
-# NYCDOE Substitute Renewal Analytics Dashboard
+# NYC Public Schools Substitute Renewal Analytics Dashboard
 
-A comprehensive analytics tool for analyzing substitute teacher and paraprofessional renewal data for the New York City Department of Education.
+A comprehensive analytics tool for analyzing substitute teacher and paraprofessional renewal data for the New York City Department of Education. Features modern, professional styling with standardized NYC Public Schools branding.
 
 ## 🚀 Features
 
 - **Comprehensive Data Analysis**: Analyzes substitute teacher and paraprofessional renewal data
 - **Comparison Analytics**: Compare current data with historical data to track changes over time
 - **Interactive Visualizations**: Plotly-powered charts and graphs with trend indicators
-- **HTML Dashboard**: Professional, responsive dashboard with key metrics and difference indicators
+- **Professional HTML Dashboard**: Modern, responsive dashboard with NYC Public Schools branding and bold typography
 - **Completion Rate Tracking**: Monitor SPA and STE completion rate changes with percentage differences
 - **Export Capabilities**: Export reports to PDF, Excel, and CSV formats
 - **Automated Categorization**: Intelligently categorizes renewal requirements and completion status
+- **Standardized Branding**: Official NYC Public Schools logo and consistent color scheme throughout
 
 ## 📊 Analysis Categories
 

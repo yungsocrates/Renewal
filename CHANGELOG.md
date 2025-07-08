@@ -5,6 +5,24 @@ All notable changes to the NYCDOE Substitute Renewal Analytics Dashboard will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2025-07-08
+
+### Enhanced
+- **Chart Sizing Optimization**: Perfect fit within HTML layout
+  - Reduced stacked bar chart width from 1500px to 900px for seamless integration
+  - Adjusted iframe width to 1000px to eliminate horizontal scrollbars
+  - Optimized chart dimensions maintain readability while fitting within white background
+  - All visualizations now perfectly contained within report layout boundaries
+- **Visual Integration**: Charts seamlessly integrate with report styling
+  - No more overflow or scrolling issues in main dashboard
+  - Professional presentation with charts fitting within design constraints
+  - Maintained text readability and hover functionality at optimized size
+
+### Technical
+- Fine-tuned Plotly chart width parameters for optimal HTML integration
+- Adjusted iframe dimensions to prevent layout overflow
+- Verified chart responsiveness across different container sizes
+
 ## [1.4.0] - 2025-07-08
 
 ### Added

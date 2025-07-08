@@ -15,10 +15,11 @@ A comprehensive analytics tool for analyzing substitute teacher and paraprofessi
   - Real-time count validation and filtering transparency
 - **Comprehensive Data Analysis**: Analyzes substitute teacher and paraprofessional renewal data
 - **Comparison Analytics**: Compare current data with historical data to track changes over time
-- **Enhanced Visualizations**: Plotly-powered charts with improved sizing and readability
-  - Larger chart containers (1500x850px) eliminate scrollbars
+- **Enhanced Visualizations**: Plotly-powered charts with optimized sizing and readability
+  - Responsive chart containers (900px width) fit perfectly within report layout
   - Professional color schemes with distinct status categories
-  - Improved text sizing for better readability
+  - Improved text sizing and reduced chart width eliminates scrollbars
+  - Optimized stacked bar chart dimensions for seamless HTML integration
 - **Professional HTML Dashboard**: Modern, responsive dashboard with NYC Public Schools branding
 - **Animated Progress Bars**: Visual completion rate indicators with animated progress bars in the executive summary
 - **Completion Rate Tracking**: Monitor SPA and STE completion rate changes with percentage differences

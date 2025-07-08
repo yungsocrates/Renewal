@@ -4,7 +4,15 @@
 
 A comprehensive, production-ready analytics dashboard for analyzing NYC Public Schools substitute teacher and paraprofessional renewal data with advanced stacked bar visualizations, accurate data processing, and professional NYC DOE branding.
 
-## 🆕 Latest Major Enhancements (v1.4.0)
+## 🆕 Latest Major Enhancements (v1.4.1)
+
+### Chart Sizing Optimization
+- **Perfect HTML Integration**: Reduced stacked bar chart width from 1500px to 900px
+- **Seamless Layout**: Charts now fit perfectly within white background without scrollbars
+- **Maintained Readability**: Text size and hover functionality preserved at optimized dimensions
+- **Professional Presentation**: All visualizations contained within report layout boundaries
+
+## 🆕 Major Enhancements (v1.4.0)
 
 ### Revolutionary Stacked Bar Visualization
 - **Advanced SPA vs STE Comparison**: Single chart showing side-by-side breakdown of renewal statuses

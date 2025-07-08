@@ -694,8 +694,8 @@ def create_visualization_charts(para_results, teacher_results, output_dir):
         xaxis_title='Substitute Groups',
         yaxis_title='Number of Substitutes',
         barmode='stack',
-        height=800,
-        width=1400,
+        height=600,
+        width=900,
         font=dict(size=12),
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='white',
@@ -706,7 +706,7 @@ def create_visualization_charts(para_results, teacher_results, output_dir):
             xanchor="left",
             x=1.02
         ),
-        margin=dict(r=200)  # Add margin for legend
+        margin=dict(r=150, l=60, t=80, b=60)  # Adjusted margins for better fit
     )
     
     # Add total counts as annotations (positioned higher above the bars)
@@ -1387,7 +1387,7 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
                 <p style="color: #666; text-align: center; margin-bottom: 20px;">
                     Each bar shows the complete breakdown of renewal statuses within each substitute group
                 </p>
-                <iframe src="combined_overview.html" width="1500" height="850" frameborder="0"></iframe>
+                <iframe src="combined_overview.html" width="950" height="620" frameborder="0"></iframe>
             </div>
             
             <div class="chart-container">

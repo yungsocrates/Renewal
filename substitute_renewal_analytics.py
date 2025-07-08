@@ -133,7 +133,7 @@ def analyze_substitute_paraprofessionals(df_para):
     def get_completion_status(row):
         """Get completion status from Status column"""
         status = str(row.get('Status', '')).strip()
-        if status.upper() in ['COMPL', 'COMPLETE']:
+        if status.upper() in ['COMPL', 'COMP', 'COMPLETE']:
             return 'Complete'
         elif status.upper() in ['OUT', 'OUTSTANDING']:
             return 'Outstanding'
@@ -364,7 +364,7 @@ def analyze_substitute_teachers(df_teacher):
     def get_teacher_completion_status(row):
         """Get completion status from Status column"""
         status = str(row.get('Status', '')).strip()
-        if status.upper() in ['COMPL', 'COMPLETE']:
+        if status.upper() in ['COMPL', 'COMP', 'COMPLETE']:
             return 'Complete'
         elif status.upper() in ['OUT', 'OUTSTANDING']:
             return 'Outstanding'

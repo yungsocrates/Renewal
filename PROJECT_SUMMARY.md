@@ -2,7 +2,22 @@
 
 ## ✅ What We've Built
 
-A comprehensive, production-ready analytics dashboard for analyzing NYC Public Schools substitute teacher and paraprofessional renewal data with standardized DOE branding and professional styling.
+A comprehensive, production-ready analytics dashboard for analyzing NYC Public Schools substitute teacher and paraprofessional renewal data with advanced stacked bar visualizations, accurate data processing, and professional NYC DOE branding.
+
+## 🆕 Latest Major Enhancements (v1.4.0)
+
+### Revolutionary Stacked Bar Visualization
+- **Advanced SPA vs STE Comparison**: Single chart showing side-by-side breakdown of renewal statuses
+- **Percentage Labels**: Real-time percentage calculations within each bar segment
+- **Professional Annotations**: Total eligible counts displayed above bars with styled backgrounds
+- **Interactive Tooltips**: Detailed hover information for each status category
+- **Enhanced Readability**: Larger text (size 12, Arial Black) and expanded containers (1500x850px)
+
+### Precise Data Accuracy
+- **Empty Row Filtering**: Properly excludes null/empty Status values from eligibility counts
+- **Count Verification**: Debug logging confirms reported totals match filtered datasets
+- **Accurate SPA Count**: Shows 14,305 eligible (not 14,311) after removing 6 empty rows
+- **Transparent Processing**: Real-time validation of filtering and counting logic
 
 ## 📋 Files Created
 

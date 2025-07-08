@@ -4,10 +4,22 @@ A comprehensive analytics tool for analyzing substitute teacher and paraprofessi
 
 ## 🚀 Features
 
+- **Advanced Stacked Bar Visualization**: Revolutionary side-by-side comparison of SPA vs STE renewal status
+  - Single chart showing both substitute groups with detailed status breakdowns
+  - Percentage labels within each bar segment for immediate insights
+  - Professional total count annotations above each bar
+  - Interactive hover tooltips with detailed breakdowns
+- **Accurate Data Processing**: Precise eligibility counting with empty row filtering
+  - Excludes null, empty, and meaningless Status values for accurate counts
+  - Debug verification ensures reported totals match filtered datasets
+  - Real-time count validation and filtering transparency
 - **Comprehensive Data Analysis**: Analyzes substitute teacher and paraprofessional renewal data
 - **Comparison Analytics**: Compare current data with historical data to track changes over time
-- **Interactive Visualizations**: Plotly-powered charts and graphs with trend indicators
-- **Professional HTML Dashboard**: Modern, responsive dashboard with NYC Public Schools branding and bold typography
+- **Enhanced Visualizations**: Plotly-powered charts with improved sizing and readability
+  - Larger chart containers (1500x850px) eliminate scrollbars
+  - Professional color schemes with distinct status categories
+  - Improved text sizing for better readability
+- **Professional HTML Dashboard**: Modern, responsive dashboard with NYC Public Schools branding
 - **Animated Progress Bars**: Visual completion rate indicators with animated progress bars in the executive summary
 - **Completion Rate Tracking**: Monitor SPA and STE completion rate changes with percentage differences
 - **Export Capabilities**: Export reports to PDF, Excel, and CSV formats

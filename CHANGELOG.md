@@ -5,6 +5,42 @@ All notable changes to the NYCDOE Substitute Renewal Analytics Dashboard will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-07-08
+
+### Added
+- **Advanced Stacked Bar Visualization**: Revolutionary SPA vs STE comparison chart
+  - Single visualization showing both Substitute Paraprofessionals and Teachers
+  - Each bar broken down by renewal status (Completed, Outstanding by category)
+  - Percentage labels within each bar segment for immediate insight
+  - Total eligible counts displayed above each bar with professional styling
+  - Interactive hover tooltips with detailed breakdowns
+- **Enhanced Chart Readability**: Improved text sizing and container dimensions
+  - Larger text in stacked bar segments (size 12, Arial Black font)
+  - Expanded chart containers (1500x850px) to eliminate scrollbars
+  - Better spacing and positioning of total count annotations
+  - Professional color scheme with distinct status categories
+
+### Enhanced
+- **Data Accuracy**: Fixed empty row filtering for precise eligibility counts
+  - Properly excludes null, empty, and meaningless Status values
+  - Accurate count verification: SPA shows 14,305 (not 14,311) after removing 6 empty rows
+  - Debug logging shows exact filtering process and row counts
+- **Visual Impact**: Combined overview chart replaces separate bar charts
+  - Side-by-side comparison of SPA (14,305 eligible) vs STE (10,574 eligible)
+  - Color-coded status categories for immediate pattern recognition
+  - Professional legend positioning and chart spacing
+- **User Experience**: Larger chart containers prevent scrolling issues
+  - All visualizations now properly fit within browser viewports
+  - Consistent sizing across main combined chart and detailed views
+  - Professional annotations with bordered text boxes
+
+### Technical
+- Implemented advanced Plotly stacked bar charts with custom styling
+- Added percentage calculation and display logic for each status segment
+- Enhanced data filtering to exclude empty/null rows from eligibility counts
+- Improved chart container sizing and responsive design
+- Added professional annotation styling with background and borders
+
 ## [1.3.0] - 2025-07-08
 
 ### Added

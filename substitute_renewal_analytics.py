@@ -116,17 +116,74 @@ def analyze_substitute_paraprofessionals(df_para):
     results = {}
     
     # Print actual columns and some sample values to help with debugging
+    print(f"=== RAW DATA DEBUG ===")
+    print(f"Original CSV rows: {len(df_para)}")
     print(f"Available columns: {list(df_para.columns)}")
-    print(f"\nSample Status values: {df_para['Status'].value_counts()}")
-    print(f"Sample RA values: {df_para['Reasonable Assurance'].value_counts()}")
     
-    # For paraprofessionals, we'll work with all active records
-    # Convert Status to uppercase for consistent comparison
+    # Check for empty/null rows
+    null_status_count = df_para['Status'].isnull().sum()
+    empty_status_count = (df_para['Status'] == '').sum()
+    print(f"Null Status values: {null_status_count}")
+    print(f"Empty Status values: {empty_status_count}")
+    
+    # Check actual data content
+    print(f"\nSample Status values (including nulls): {df_para['Status'].value_counts(dropna=False)}")
+    print(f"Sample RA values (including nulls): {df_para['Reasonable Assurance'].value_counts(dropna=False)}")
+    
+    # Check for completely empty rows
+    completely_empty_rows = df_para.isnull().all(axis=1).sum()
+    print(f"Completely empty rows: {completely_empty_rows}")
+    
+    # Check rows with meaningful data (non-null Status and at least one other field)
+    meaningful_rows = df_para[df_para['Status'].notna() & (df_para['Status'] != '')].copy()
+    print(f"Rows with non-null, non-empty Status: {len(meaningful_rows)}")
+    
+    # Check for the problematic statuses we want to exclude
+    if 'Staffing Status' in df_para.columns:
+        print(f"Staffing Status values: {df_para['Staffing Status'].value_counts()}")
+        excluded_count = len(df_para[df_para['Staffing Status'].isin(['Pending Termination for FT', 'Active 5BA/5BP'])])
+        print(f"Records to exclude based on Staffing Status: {excluded_count}")
+    else:
+        print("No 'Staffing Status' column found")
+    
+    # Check Status column for exclusions
+    status_excluded_count = len(df_para[df_para['Status'].isin(['Pending Term for FT', 'Pending Termination for FT'])])
+    print(f"Records to exclude based on Status: {status_excluded_count}")
+    print(f"=== END RAW DATA DEBUG ===\n")
+    
+    # For paraprofessionals, we'll work with only meaningful records
+    # First, filter out empty/null status rows and convert to uppercase
     df_para_clean = df_para.copy()
+    
+    # Remove rows with null, empty, or meaningless Status values
+    df_para_clean = df_para_clean[
+        (df_para_clean['Status'].notna()) & 
+        (df_para_clean['Status'] != '') & 
+        (df_para_clean['Status'].astype(str).str.strip() != '') &
+        (df_para_clean['Status'].astype(str).str.strip().str.upper() != 'NAN')
+    ].copy()
+    
+    print(f"After removing null/empty Status rows: {len(df_para_clean)} records")
+    
     df_para_clean['Status'] = df_para_clean['Status'].astype(str).str.strip().str.upper()
     
-    # Filter out terminated or inactive records if needed
-    active_df = df_para_clean[df_para_clean['Status'].notna()].copy()
+    # Filter out terminated or inactive records and specific statuses
+    # Remove "Pending Termination for FT" and "Active 5BA/5BP" if they exist in staffing status
+    if 'Staffing Status' in df_para_clean.columns:
+        excluded_statuses = ['Pending Termination for FT', 'Active 5BA/5BP']
+        active_df = df_para_clean[
+            ~df_para_clean['Staffing Status'].isin(excluded_statuses)
+        ].copy()
+    else:
+        active_df = df_para_clean.copy()
+    
+    # Also exclude specific Status values
+    excluded_status_values = ['Pending Term for FT', 'Pending Termination for FT']
+    active_df = active_df[
+        ~active_df['Status'].str.upper().isin([s.upper() for s in excluded_status_values])
+    ].copy()
+    
+    print(f"After applying all filters: {len(active_df)} records")
     
     # Determine completion status based on Status column
     # Status column: Out = outstanding, COMPL = complete (based on actual data)
@@ -178,8 +235,9 @@ def analyze_substitute_paraprofessionals(df_para):
     results['ra_not_complete'] = len(ra_not_complete)
     
     # RA Complete group (those who have met RA requirement)
+    # Include both "COMPLETE" and "Letter Not Sent" as complete values
     ra_complete_group = active_df[
-        active_df.get('Reasonable Assurance', '').astype(str).str.strip().str.upper().isin(['COMPLETE'])
+        active_df.get('Reasonable Assurance', '').astype(str).str.strip().str.upper().isin(['COMPLETE', 'LETTER NOT SENT'])
     ].copy()
     
     outstanding_with_ra_complete = ra_complete_group[ra_complete_group['computed_status'] == 'Outstanding']
@@ -227,23 +285,23 @@ def analyze_substitute_paraprofessionals(df_para):
         
         results['days_worked_only'] = len(days_only_with_other_reqs_met)
         
-        # Autism Workshop Only (≥20 days, only Autism Workshop incomplete)
-        autism_only_candidates = ra_complete_group[
+        # Child Abuse Workshop Only (≥20 days, only Child Abuse Workshop incomplete)
+        child_abuse_only_candidates = ra_complete_group[
             (ra_complete_group['days_worked_int'] >= 20) &
             (ra_complete_group['computed_status'] == 'Outstanding')
         ]
         
-        autism_only_filtered = []
-        for _, row in autism_only_candidates.iterrows():
-            autism_incomplete = is_requirement_outstanding(row.get('Autism Workshop', ''))
+        child_abuse_only_filtered = []
+        for _, row in child_abuse_only_candidates.iterrows():
+            child_abuse_incomplete = is_requirement_outstanding(row.get('Child Abuse Workshop', ''))
             
             # Check if other major requirements are complete
             other_reqs = [
-                row.get('Child Abuse Workshop', ''),
                 row.get('Violence Prevention Workshop', ''),
                 row.get('DASA Workshop', ''),
                 row.get('SubHub Training', ''),
-                row.get('State Exam', '')
+                row.get('State Exam', ''),
+                row.get('Autism Workshop', '')
             ]
             
             other_complete_count = sum(1 for req in other_reqs 
@@ -251,11 +309,11 @@ def analyze_substitute_paraprofessionals(df_para):
             other_required_count = sum(1 for req in other_reqs 
                                      if str(req).strip().upper() != 'NOT REQUIRED')
             
-            # If autism is incomplete but most others are complete
-            if autism_incomplete and other_required_count > 0 and (other_complete_count / other_required_count) >= 0.8:
-                autism_only_filtered.append(row)
+            # If child abuse is incomplete but most others are complete
+            if child_abuse_incomplete and other_required_count > 0 and (other_complete_count / other_required_count) >= 0.8:
+                child_abuse_only_filtered.append(row)
         
-        results['autism_workshop_only'] = len(autism_only_filtered)
+        results['child_abuse_workshop_only'] = len(child_abuse_only_filtered)
         
         # State Exam as ATAS equivalent for paraprofessionals
         atas_only_candidates = ra_complete_group[
@@ -324,17 +382,18 @@ def analyze_substitute_paraprofessionals(df_para):
         results.update({
             'days_worked_only': 0,
             'atas_only': 0,
-            'autism_workshop_only': 0,
+            'child_abuse_workshop_only': 0,
             'days_and_other_requirements': 0
         })
     
-    print(f"Detailed Analysis - Days Only: {results['days_worked_only']}, Autism Only: {results['autism_workshop_only']}, ATAS Only: {results['atas_only']}, Days & Others: {results['days_and_other_requirements']}")
+    print(f"Detailed Analysis - Days Only: {results['days_worked_only']}, Child Abuse Only: {results['child_abuse_workshop_only']}, ATAS Only: {results['atas_only']}, Days & Others: {results['days_and_other_requirements']}")
     
-    # Suspension Analysis
-    results['total_suspended_2ss'] = len(df_para_clean[df_para_clean.get('Suspension Reason Code', '').astype(str).str.strip() == '2SS'])
-    results['total_suspended_2sr'] = len(df_para_clean[df_para_clean.get('Suspension Reason Code', '').astype(str).str.strip() == '2SR'])
+    # Suspension Analysis - using the same filtered dataset as other calculations
+    results['total_suspended_2ss'] = len(active_df[active_df.get('Suspension Reason Code', '').astype(str).str.strip() == '2SS'])
+    results['total_suspended_2sr'] = len(active_df[active_df.get('Suspension Reason Code', '').astype(str).str.strip() == '2SR'])
     
     print(f"Suspension Analysis - 2SS: {results['total_suspended_2ss']}, 2SR: {results['total_suspended_2sr']}")
+    print(f"Final count verification - Total rows in filtered dataset: {len(active_df)}, Total eligible reported: {results['total_eligible']}")
     
     return results
 
@@ -353,8 +412,14 @@ def analyze_substitute_teachers(df_teacher):
     # Print actual columns to help with debugging
     print(f"Available teacher columns: {list(df_teacher.columns)}")
     
-    # Exclude "Pending Term for FT" if this status exists
-    df_filtered = df_teacher[df_teacher.get('Status', '') != 'Pending Term for FT'].copy()
+    # Filter out specific statuses including "Pending Termination for FT" and "Active 5BA/5BP"
+    excluded_statuses = ['Pending Term for FT', 'Pending Termination for FT']
+    df_filtered = df_teacher[~df_teacher.get('Status', '').isin(excluded_statuses)].copy()
+    
+    # Also filter by Staffing Status if column exists
+    if 'Staffing Status' in df_teacher.columns:
+        excluded_staffing_statuses = ['Pending Termination for FT', 'Active 5BA/5BP']
+        df_filtered = df_filtered[~df_filtered.get('Staffing Status', '').isin(excluded_staffing_statuses)].copy()
     
     # For teachers, we'll work with all active records
     eligible_df = df_filtered[df_filtered['Status'].notna()].copy()
@@ -459,13 +524,13 @@ def analyze_substitute_teachers(df_teacher):
         
         results['prc_pru_days_worked_only'] = len(days_only_filtered)
         
-        # Autism Workshop Only (≥20 days, Autism Workshop not complete)
-        autism_only = prc_pru_ra_complete[
+        # Child Abuse Workshop Only (≥20 days, Child Abuse Workshop not complete)
+        child_abuse_only = prc_pru_ra_complete[
             (prc_pru_ra_complete['days_worked_int'] >= 20) &
-            (prc_pru_ra_complete.get('Autism Workshop', '').astype(str).str.strip().str.upper() == 'NOT COMPLETE') &
+            (prc_pru_ra_complete.get('Child Abuse Workshop', '').astype(str).str.strip().str.upper() == 'NOT COMPLETE') &
             (prc_pru_ra_complete['computed_status'] == 'Outstanding')
         ]
-        results['prc_pru_autism_workshop_only'] = len(autism_only)
+        results['prc_pru_child_abuse_workshop_only'] = len(child_abuse_only)
         
         # Other Requirements Only (≥20 days, other requirements not complete)
         other_requirements_only = prc_pru_ra_complete[
@@ -534,7 +599,7 @@ def analyze_substitute_teachers(df_teacher):
     else:
         results.update({
             'prc_pru_days_worked_only': 0,
-            'prc_pru_autism_workshop_only': 0,
+            'prc_pru_child_abuse_workshop_only': 0,
             'prc_pru_other_requirements_only': 0,
             'prc_pru_days_and_other_requirements': 0
         })
@@ -566,45 +631,163 @@ def create_visualization_charts(para_results, teacher_results, output_dir):
     """
     os.makedirs(output_dir, exist_ok=True)
     
-    # Paraprofessional Overview Chart
+    # Combined Stacked Bar Chart - one bar for SPA, one bar for STE
+    # Each bar shows the breakdown of renewal statuses
+    
+    # Define the status categories and their colors
+    status_categories = ['Completed', 'Outstanding - RA Incomplete', 'Outstanding - Days Only', 
+                        'Outstanding - Child Abuse Only', 'Outstanding - ATAS Only', 'Outstanding - Other']
+    colors = ['#28a745', '#dc3545', '#fd7e14', '#ffc107', '#17a2b8', '#6f42c1']
+    
+    # SPA data breakdown
+    spa_completed = para_results.get('total_complete', 0)
+    spa_ra_incomplete = para_results.get('ra_not_complete', 0)
+    spa_days_only = para_results.get('days_worked_only', 0)
+    spa_child_abuse_only = para_results.get('child_abuse_workshop_only', 0)
+    spa_atas_only = para_results.get('atas_only', 0)
+    spa_other = para_results.get('total_outstanding', 0) - spa_ra_incomplete - spa_days_only - spa_child_abuse_only - spa_atas_only
+    spa_other = max(0, spa_other)  # Ensure non-negative
+    
+    # STE data breakdown (using PRC/PRU)
+    ste_completed = teacher_results.get('total_prc_pru_complete', 0)
+    ste_ra_incomplete = teacher_results.get('prc_pru_ra_not_complete', 0)
+    ste_days_only = teacher_results.get('prc_pru_days_worked_only', 0)
+    ste_child_abuse_only = teacher_results.get('prc_pru_child_abuse_workshop_only', 0)
+    ste_atas_only = teacher_results.get('prc_pru_other_requirements_only', 0)  # Using "other requirements" as ATAS equivalent
+    ste_other = teacher_results.get('total_prc_pru_outstanding', 0) - ste_ra_incomplete - ste_days_only - ste_child_abuse_only - ste_atas_only
+    ste_other = max(0, ste_other)  # Ensure non-negative
+    
+    # Create stacked bar chart
+    fig_overview = go.Figure()
+    
+    # Add each status category as a separate trace
+    spa_values = [spa_completed, spa_ra_incomplete, spa_days_only, spa_child_abuse_only, spa_atas_only, spa_other]
+    ste_values = [ste_completed, ste_ra_incomplete, ste_days_only, ste_child_abuse_only, ste_atas_only, ste_other]
+    
+    # Calculate totals for percentage calculations
+    spa_total = sum(spa_values)
+    ste_total = sum(ste_values)
+    
+    for i, (category, color) in enumerate(zip(status_categories, colors)):
+        # Calculate percentages
+        spa_percentage = (spa_values[i] / spa_total * 100) if spa_total > 0 else 0
+        ste_percentage = (ste_values[i] / ste_total * 100) if ste_total > 0 else 0
+        
+        # Create text labels with count and percentage (only show if value > 0)
+        spa_text = f"{format_number(spa_values[i])}<br>({spa_percentage:.1f}%)" if spa_values[i] > 0 else ""
+        ste_text = f"{format_number(ste_values[i])}<br>({ste_percentage:.1f}%)" if ste_values[i] > 0 else ""
+        
+        fig_overview.add_trace(go.Bar(
+            name=category,
+            x=['Substitute Paraprofessionals (SPA)', 'Substitute Teachers (STE)'],
+            y=[spa_values[i], ste_values[i]],
+            marker_color=color,
+            text=[spa_text, ste_text],
+            textposition='inside',
+            textfont=dict(color='white', size=12, family="Arial Black"),
+            hovertemplate='<b>%{x}</b><br><b>' + category + '</b><br>Count: %{y:,}<br>Percentage: %{customdata:.1f}%<extra></extra>',
+            customdata=[spa_percentage, ste_percentage]
+        ))
+    
+    fig_overview.update_layout(
+        title='NYC DOE Substitute Renewal Status Breakdown: SPA vs STE',
+        xaxis_title='Substitute Groups',
+        yaxis_title='Number of Substitutes',
+        barmode='stack',
+        height=800,
+        width=1400,
+        font=dict(size=12),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='white',
+        legend=dict(
+            orientation="v",
+            yanchor="middle",
+            y=0.5,
+            xanchor="left",
+            x=1.02
+        ),
+        margin=dict(r=200)  # Add margin for legend
+    )
+    
+    # Add total counts as annotations (positioned higher above the bars)
+    spa_total_eligible = para_results.get('total_eligible', 0)
+    ste_total_eligible = teacher_results.get('total_prc_pru_eligible', 0)
+    
+    # Calculate the maximum height for positioning
+    max_spa_height = sum(spa_values)
+    max_ste_height = sum(ste_values)
+    
+    fig_overview.add_annotation(
+        x=0, y=max_spa_height + (max_spa_height * 0.08),  # Position 8% above the bar
+        text=f"Total Eligible: {format_number(spa_total_eligible)}",
+        showarrow=False,
+        font=dict(size=14, color="#2C5282", family="Arial Black"),
+        bgcolor="rgba(255,255,255,0.8)",
+        bordercolor="#2C5282",
+        borderwidth=1
+    )
+    
+    fig_overview.add_annotation(
+        x=1, y=max_ste_height + (max_ste_height * 0.08),  # Position 8% above the bar
+        text=f"Total Eligible: {format_number(ste_total_eligible)}",
+        showarrow=False,
+        font=dict(size=14, color="#2C5282", family="Arial Black"),
+        bgcolor="rgba(255,255,255,0.8)",
+        bordercolor="#2C5282",
+        borderwidth=1
+    )
+    
+    # Add grid lines for better readability
+    fig_overview.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray')
+    
+    overview_chart_file = os.path.join(output_dir, 'combined_overview.html')
+    pyo.plot(fig_overview, filename=overview_chart_file, auto_open=False)
+    
+    # Detailed Paraprofessional Chart (keep for reference)
     para_labels = ['Total Eligible', 'Completed', 'Outstanding', 'RA Not Complete', 
-                   'Days Only', 'ATAS Only', 'Autism Only']
-    para_values = [
+                   'Days Only', 'ATAS Only', 'Child Abuse Only']
+    para_values_detailed = [
         para_results.get('total_eligible', 0),
         para_results.get('total_complete', 0),
         para_results.get('total_outstanding', 0),
         para_results.get('ra_not_complete', 0),
         para_results.get('days_worked_only', 0),
         para_results.get('atas_only', 0),
-        para_results.get('autism_workshop_only', 0)
+        para_results.get('child_abuse_workshop_only', 0)
     ]
     
     fig_para = go.Figure(data=[
         go.Bar(
             x=para_labels,
-            y=para_values,
-            marker_color=['#1f77b4', '#2ca02c', '#ff7f0e', '#d62728', 
-                         '#9467bd', '#8c564b', '#e377c2'],
-            text=[format_number(v) for v in para_values],
-            textposition='auto'
+            y=para_values_detailed,
+            marker_color=['#2C5282', '#28a745', '#fd7e14', '#dc3545', 
+                         '#6f42c1', '#17a2b8', '#ffc107'],
+            text=[format_number(v) for v in para_values_detailed],
+            textposition='auto',
+            hovertemplate='<b>%{x}</b><br>Count: %{y:,}<extra></extra>'
         )
     ])
     
     fig_para.update_layout(
-        title='Substitute Paraprofessional Renewal Overview',
-        xaxis_title='Categories',
+        title='Substitute Paraprofessional (SPA) Detailed Analysis',
+        xaxis_title='Renewal Categories',
         yaxis_title='Number of Substitutes',
         height=500,
-        width=1200
+        width=1200,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='white'
     )
+    
+    fig_para.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray')
+    fig_para.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray')
     
     para_chart_file = os.path.join(output_dir, 'paraprofessional_overview.html')
     pyo.plot(fig_para, filename=para_chart_file, auto_open=False)
     
-    # Teacher Overview Chart
+    # Detailed Teacher Chart (keep for reference)
     teacher_labels = ['Total Eligible', 'PRC/PRU Eligible', 'PRC/PRU Complete', 
                      'PRC/PRU Outstanding', 'Teachers On Leave', 'Retirees']
-    teacher_values = [
+    teacher_values_detailed = [
         teacher_results.get('total_eligible', 0),
         teacher_results.get('total_prc_pru_eligible', 0),
         teacher_results.get('total_prc_pru_complete', 0),
@@ -616,26 +799,32 @@ def create_visualization_charts(para_results, teacher_results, output_dir):
     fig_teacher = go.Figure(data=[
         go.Bar(
             x=teacher_labels,
-            y=teacher_values,
-            marker_color=['#1f77b4', '#2ca02c', '#ff7f0e', '#d62728', 
-                         '#9467bd', '#8c564b'],
-            text=[format_number(v) for v in teacher_values],
-            textposition='auto'
+            y=teacher_values_detailed,
+            marker_color=['#1976d2', '#28a745', '#fd7e14', '#dc3545', 
+                         '#6f42c1', '#17a2b8'],
+            text=[format_number(v) for v in teacher_values_detailed],
+            textposition='auto',
+            hovertemplate='<b>%{x}</b><br>Count: %{y:,}<extra></extra>'
         )
     ])
     
     fig_teacher.update_layout(
-        title='Substitute Teacher Renewal Overview',
-        xaxis_title='Categories',
+        title='Substitute Teacher (STE) Detailed Analysis',
+        xaxis_title='Renewal Categories',
         yaxis_title='Number of Substitutes',
         height=500,
-        width=1200
+        width=1200,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='white'
     )
+    
+    fig_teacher.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray')
+    fig_teacher.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray')
     
     teacher_chart_file = os.path.join(output_dir, 'teacher_overview.html')
     pyo.plot(fig_teacher, filename=teacher_chart_file, auto_open=False)
     
-    # Combined Comparison Chart
+    # Combined Comparison Pie Chart (keep existing)
     fig_combined = make_subplots(
         rows=1, cols=2,
         subplot_titles=('Paraprofessionals', 'Teachers'),
@@ -645,27 +834,29 @@ def create_visualization_charts(para_results, teacher_results, output_dir):
     # Paraprofessional pie chart
     fig_combined.add_trace(
         go.Pie(
-            labels=['Completed', 'Outstanding'],
+            labels=['Complete', 'Outstanding'],
             values=[para_results.get('total_complete', 0), 
                    para_results.get('total_outstanding', 0)],
             name="Paraprofessionals",
             hole=0.3,
-            marker_colors=['#2ca02c', '#ff7f0e']
+            marker_colors=['#28a745', '#fd7e14'],
+            showlegend=True
         ),
         row=1, col=1
     )
-    
+
     # Teacher pie chart
     fig_combined.add_trace(
         go.Pie(
-            labels=['PRC/PRU Complete', 'PRC/PRU Outstanding', 'On Leave', 'Retirees'],
+            labels=['Complete', 'Outstanding', 'On Leave', 'Retirees'],
             values=[teacher_results.get('total_prc_pru_complete', 0),
                    teacher_results.get('total_prc_pru_outstanding', 0),
                    teacher_results.get('total_teachers_on_leave', 0),
                    teacher_results.get('total_retirees', 0)],
             name="Teachers",
             hole=0.3,
-            marker_colors=['#2ca02c', '#ff7f0e', '#9467bd', '#8c564b']
+            marker_colors=['#28a745', '#fd7e14', '#6f42c1', '#17a2b8'],
+            showlegend=True
         ),
         row=1, col=2
     )
@@ -673,13 +864,21 @@ def create_visualization_charts(para_results, teacher_results, output_dir):
     fig_combined.update_layout(
         title_text="Renewal Status Comparison: Paraprofessionals vs Teachers",
         height=500,
-        width=1200
+        width=1200,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.15,
+            xanchor="center",
+            x=0.5,
+            traceorder="normal"
+        )
     )
     
     combined_chart_file = os.path.join(output_dir, 'combined_comparison.html')
     pyo.plot(fig_combined, filename=combined_chart_file, auto_open=False)
     
-    return [para_chart_file, teacher_chart_file, combined_chart_file]
+    return [overview_chart_file, para_chart_file, teacher_chart_file, combined_chart_file]
 
 def generate_html_report(para_results, teacher_results, para_differences, teacher_differences, 
                         para_percentage_differences, teacher_percentage_differences, 
@@ -1076,8 +1275,8 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
                     <div class="metric-label">ATAS Only</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_metric_with_diff(para_results.get('autism_workshop_only', 0), para_differences.get('autism_workshop_only', '0'), has_comparison)}</div>
-                    <div class="metric-label">Autism Workshop Only</div>
+                    <div class="metric-value">{format_metric_with_diff(para_results.get('child_abuse_workshop_only', 0), para_differences.get('child_abuse_workshop_only', '0'), has_comparison)}</div>
+                    <div class="metric-label">Child Abuse Workshop Only</div>
                 </div>
             </div>
             
@@ -1133,8 +1332,8 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
                     <div class="metric-label">Days Worked Only</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('prc_pru_autism_workshop_only', 0), teacher_differences.get('prc_pru_autism_workshop_only', '0'), has_comparison)}</div>
-                    <div class="metric-label">Autism Workshop Only</div>
+                    <div class="metric-value">{format_metric_with_diff(teacher_results.get('prc_pru_child_abuse_workshop_only', 0), teacher_differences.get('prc_pru_child_abuse_workshop_only', '0'), has_comparison)}</div>
+                    <div class="metric-label">Child Abuse Workshop Only</div>
                 </div>
             </div>
             
@@ -1184,18 +1383,26 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
         <div class="section">
             <h2>Interactive Visualizations</h2>
             <div class="chart-container">
-                <h3>Paraprofessional Overview</h3>
-                <iframe src="paraprofessional_overview.html" width="1200" height="520" frameborder="0"></iframe>
+                <h3>Renewal Status Breakdown by Group</h3>
+                <p style="color: #666; text-align: center; margin-bottom: 20px;">
+                    Each bar shows the complete breakdown of renewal statuses within each substitute group
+                </p>
+                <iframe src="combined_overview.html" width="1500" height="850" frameborder="0"></iframe>
             </div>
             
             <div class="chart-container">
-                <h3>Teacher Overview</h3>
-                <iframe src="teacher_overview.html" width="1200" height="520" frameborder="0"></iframe>
+                <h3>Renewal Status Breakdown</h3>
+                <iframe src="combined_comparison.html" width="1300" height="550" frameborder="0"></iframe>
             </div>
             
             <div class="chart-container">
-                <h3>Comparison Analysis</h3>
-                <iframe src="combined_comparison.html" width="1200" height="520" frameborder="0"></iframe>
+                <h3>Detailed SPA Analysis</h3>
+                <iframe src="paraprofessional_overview.html" width="1300" height="550" frameborder="0"></iframe>
+            </div>
+            
+            <div class="chart-container">
+                <h3>Detailed STE Analysis</h3>
+                <iframe src="teacher_overview.html" width="1300" height="550" frameborder="0"></iframe>
             </div>
         </div>
         </div>
@@ -1422,7 +1629,7 @@ def main():
             para_results = {key: 0 for key in [
                 'total_eligible', 'total_complete', 'total_outstanding', 'ra_not_complete',
                 'ra_complete_other_outstanding', 'days_worked_only', 'atas_only',
-                'autism_workshop_only', 'days_and_other_requirements', 'total_suspended_2ss',
+                'child_abuse_workshop_only', 'days_and_other_requirements', 'total_suspended_2ss',
                 'total_suspended_2sr'
             ]}
         
@@ -1449,7 +1656,7 @@ def main():
             teacher_results = {key: 0 for key in [
                 'total_eligible', 'total_prc_pru_eligible', 'total_prc_pru_complete',
                 'total_prc_pru_outstanding', 'prc_pru_ra_not_complete', 'prc_pru_met_ra_other_outstanding',
-                'prc_pru_days_worked_only', 'prc_pru_autism_workshop_only', 'prc_pru_other_requirements_only',
+                'prc_pru_days_worked_only', 'prc_pru_child_abuse_workshop_only', 'prc_pru_other_requirements_only',
                 'prc_pru_days_and_other_requirements', 'total_teachers_on_leave', 'total_retirees',
                 'total_prr_complete', 'total_prr_outstanding', 'total_suspended_2ss', 'total_suspended_2sr'
             ]}

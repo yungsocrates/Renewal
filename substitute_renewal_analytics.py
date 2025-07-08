@@ -727,10 +727,10 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
         
         # Determine color and style based on difference
         if diff_value.startswith('+'):
-            color = "#28a745"  # Green for positive
+            color = "#ff8c00"  # Orange for positive
             icon = "▲"
         elif diff_value.startswith('-'):
-            color = "#dc3545"  # Red for negative
+            color = "#ff8c00"  # Orange for negative
             icon = "▼"
         else:
             return formatted_value
@@ -746,10 +746,10 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
         
         # Determine color and style based on difference
         if diff_value.startswith('+'):
-            color = "#28a745"  # Green for positive
+            color = "#ff8c00"  # Orange for positive (neutral)
             icon = "▲"
         elif diff_value.startswith('-'):
-            color = "#dc3545"  # Red for negative
+            color = "#ff8c00"  # Orange for negative (neutral)
             icon = "▼"
         else:
             return formatted_value

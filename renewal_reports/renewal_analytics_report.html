@@ -172,6 +172,69 @@
             .footer a:hover {
                 text-decoration: underline;
             }
+            .progress-container {
+                width: 100%;
+                background-color: #e0e0e0;
+                border-radius: 25px;
+                margin: 10px 0;
+                height: 20px;
+                box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+            }
+            .progress-bar {
+                height: 100%;
+                border-radius: 25px;
+                background: linear-gradient(45deg, #28a745, #20c997);
+                transition: width 1.5s ease-in-out;
+                position: relative;
+                overflow: hidden;
+            }
+            .progress-bar::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                right: 0;
+                background-image: linear-gradient(
+                    -45deg,
+                    rgba(255, 255, 255, .2) 25%,
+                    transparent 25%,
+                    transparent 50%,
+                    rgba(255, 255, 255, .2) 50%,
+                    rgba(255, 255, 255, .2) 75%,
+                    transparent 75%,
+                    transparent
+                );
+                background-size: 50px 50px;
+                animation: move 2s linear infinite;
+            }
+            @keyframes move {
+                0% {
+                    background-position: 0 0;
+                }
+                100% {
+                    background-position: 50px 50px;
+                }
+            }
+            .progress-text {
+                text-align: center;
+                font-weight: bold;
+                color: #2C5282;
+                margin-top: 5px;
+                font-size: 0.9em;
+            }
+            .metric-card-with-progress {
+                background: #f8f9fa; 
+                padding: 20px; 
+                border-left: 5px solid #2C5282;
+                border-radius: 5px;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+                position: relative;
+            }
+            .metric-card-with-progress:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            }
         </style>
     </head>
     <body>
@@ -181,7 +244,7 @@
             <div class="header-text">
                 <h1>Substitute Renewal Analytics Dashboard</h1>
                 <h2>Comprehensive Analysis of Substitute Teacher and Paraprofessional Renewal Data</h2>
-                <p class="date-info">Generated on: July 08, 2025 at 10:34 AM | Changes from previous data shown with ▲/▼ indicators</p>
+                <p class="date-info">Generated on: July 08, 2025 at 10:49 AM | Changes from previous data shown with ▲/▼ indicators</p>
             </div>
             <div class="header-logo">
                 <img src="Horizontal_logo_White_PublicSchools.png" alt="NYC Public Schools" class="logo">
@@ -199,17 +262,25 @@
                         <div class="metric-value">14,311</div>
                         <div class="metric-label">Total SPAs Eligible for Renewal</div>
                     </div>
-                    <div class="metric-card">
+                    <div class="metric-card-with-progress">
                         <div class="metric-value">46.2%<br><small style="color: #28a745; font-weight: bold;">▲ +0.7%</small></div>
                         <div class="metric-label">SPA Completion Rate</div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: 46.2%;"></div>
+                        </div>
+                        <div class="progress-text">6,606 of 14,311 completed</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-value">11,043</div>
                         <div class="metric-label">Total STEs (PRC/PRU) Eligible</div>
                     </div>
-                    <div class="metric-card">
+                    <div class="metric-card-with-progress">
                         <div class="metric-value">53.6%<br><small style="color: #28a745; font-weight: bold;">▲ +0.8%</small></div>
                         <div class="metric-label">STE Completion Rate</div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: 53.6%;"></div>
+                        </div>
+                        <div class="progress-text">5,919 of 11,043 completed</div>
                     </div>
                 </div>
             </div>

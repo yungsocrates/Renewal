@@ -935,6 +935,69 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
             .footer a:hover {{
                 text-decoration: underline;
             }}
+            .progress-container {{
+                width: 100%;
+                background-color: #e0e0e0;
+                border-radius: 25px;
+                margin: 10px 0;
+                height: 20px;
+                box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+            }}
+            .progress-bar {{
+                height: 100%;
+                border-radius: 25px;
+                background: linear-gradient(45deg, #28a745, #20c997);
+                transition: width 1.5s ease-in-out;
+                position: relative;
+                overflow: hidden;
+            }}
+            .progress-bar::before {{
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                right: 0;
+                background-image: linear-gradient(
+                    -45deg,
+                    rgba(255, 255, 255, .2) 25%,
+                    transparent 25%,
+                    transparent 50%,
+                    rgba(255, 255, 255, .2) 50%,
+                    rgba(255, 255, 255, .2) 75%,
+                    transparent 75%,
+                    transparent
+                );
+                background-size: 50px 50px;
+                animation: move 2s linear infinite;
+            }}
+            @keyframes move {{
+                0% {{
+                    background-position: 0 0;
+                }}
+                100% {{
+                    background-position: 50px 50px;
+                }}
+            }}
+            .progress-text {{
+                text-align: center;
+                font-weight: bold;
+                color: #2C5282;
+                margin-top: 5px;
+                font-size: 0.9em;
+            }}
+            .metric-card-with-progress {{
+                background: #f8f9fa; 
+                padding: 20px; 
+                border-left: 5px solid #2C5282;
+                border-radius: 5px;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+                position: relative;
+            }}
+            .metric-card-with-progress:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            }}
         </style>
     </head>
     <body>
@@ -953,17 +1016,25 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
                         <div class="metric-value">{format_metric_with_diff(para_results.get('total_eligible', 0), para_differences.get('total_eligible', '0'), has_comparison)}</div>
                         <div class="metric-label">Total SPAs Eligible for Renewal</div>
                     </div>
-                    <div class="metric-card">
+                    <div class="metric-card-with-progress">
                         <div class="metric-value">{format_percentage_with_diff(para_completion_rate, para_percentage_differences.get('spa_completion_rate', '0%'), has_comparison)}</div>
                         <div class="metric-label">SPA Completion Rate</div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: {para_completion_rate:.1f}%;"></div>
+                        </div>
+                        <div class="progress-text">{para_results.get('total_complete', 0):,} of {para_results.get('total_eligible', 0):,} completed</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-value">{format_metric_with_diff(teacher_results.get('total_prc_pru_eligible', 0), teacher_differences.get('total_prc_pru_eligible', '0'), has_comparison)}</div>
                         <div class="metric-label">Total STEs (PRC/PRU) Eligible</div>
                     </div>
-                    <div class="metric-card">
+                    <div class="metric-card-with-progress">
                         <div class="metric-value">{format_percentage_with_diff(teacher_completion_rate, teacher_percentage_differences.get('ste_completion_rate', '0%'), has_comparison)}</div>
                         <div class="metric-label">STE Completion Rate</div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: {teacher_completion_rate:.1f}%;"></div>
+                        </div>
+                        <div class="progress-text">{teacher_results.get('total_prc_pru_complete', 0):,} of {teacher_results.get('total_prc_pru_eligible', 0):,} completed</div>
                     </div>
                 </div>
             </div>

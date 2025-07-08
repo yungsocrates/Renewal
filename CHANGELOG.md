@@ -5,6 +5,31 @@ All notable changes to the NYCDOE Substitute Renewal Analytics Dashboard will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-07-08
+
+### Added
+- **Animated Progress Bars**: Interactive completion rate visualizations in executive summary
+  - Visual progress bars showing SPA and STE completion percentages
+  - Smooth animations with moving stripe effects
+  - Real-time completion counts (e.g., "6,502 of 14,311 completed")
+  - Professional gradient styling with green color scheme
+- **Enhanced Status Recognition**: Improved completion status logic
+  - Support for both 'COMPL' and 'COMP' as complete statuses
+  - Support for both 'OUT' and 'Out' as outstanding statuses
+  - More robust status detection across all data types
+
+### Enhanced
+- **Executive Summary Visual Appeal**: Progress bars make completion rates immediately visible
+- **User Experience**: Interactive hover effects on progress bar cards
+- **Professional Animation**: CSS keyframe animations for visual enhancement
+- **Responsive Design**: Progress bars adapt to all screen sizes
+
+### Technical
+- Added CSS progress bar styling with gradient backgrounds
+- Implemented keyframe animations for moving stripe effects
+- Enhanced metric card layout with progress indicator support
+- Improved status detection logic in analysis functions
+
 ## [1.2.0] - 2025-01-18
 
 ### Added

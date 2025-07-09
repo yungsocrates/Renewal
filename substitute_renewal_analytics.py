@@ -1378,6 +1378,14 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
         <div class="section">
             <h2>Interactive Visualizations</h2>
             <div class="chart-container">
+                <h3>Geographic Distribution by Borough</h3>
+                <p style="color: #666; text-align: center; margin-bottom: 20px;">
+                    Interactive NYC map showing substitute distribution and renewal completion rates by borough
+                </p>
+                <iframe src="nyc_borough_map.html" width="1250" height="850" frameborder="0"></iframe>
+            </div>
+            
+            <div class="chart-container">
                 <h3>Renewal Status Breakdown by Group</h3>
                 <p style="color: #666; text-align: center; margin-bottom: 20px;">
                     Each bar shows the complete breakdown of renewal statuses within each substitute group
@@ -1564,6 +1572,418 @@ def calculate_teacher_percentage_differences(new_results, old_results):
     
     return differences
 
+# === GEOGRAPHIC ANALYSIS FUNCTIONS ===
+
+def get_nyc_zip_borough_mapping():
+    """
+    Returns a dictionary mapping NYC ZIP codes to boroughs
+    Based on official NYC ZIP code boundaries
+    """
+    zip_to_borough = {
+        # Manhattan
+        '10001': 'Manhattan', '10002': 'Manhattan', '10003': 'Manhattan', '10004': 'Manhattan',
+        '10005': 'Manhattan', '10006': 'Manhattan', '10007': 'Manhattan', '10008': 'Manhattan',
+        '10009': 'Manhattan', '10010': 'Manhattan', '10011': 'Manhattan', '10012': 'Manhattan',
+        '10013': 'Manhattan', '10014': 'Manhattan', '10015': 'Manhattan', '10016': 'Manhattan',
+        '10017': 'Manhattan', '10018': 'Manhattan', '10019': 'Manhattan', '10020': 'Manhattan',
+        '10021': 'Manhattan', '10022': 'Manhattan', '10023': 'Manhattan', '10024': 'Manhattan',
+        '10025': 'Manhattan', '10026': 'Manhattan', '10027': 'Manhattan', '10028': 'Manhattan',
+        '10029': 'Manhattan', '10030': 'Manhattan', '10031': 'Manhattan', '10032': 'Manhattan',
+        '10033': 'Manhattan', '10034': 'Manhattan', '10035': 'Manhattan', '10036': 'Manhattan',
+        '10037': 'Manhattan', '10038': 'Manhattan', '10039': 'Manhattan', '10040': 'Manhattan',
+        '10041': 'Manhattan', '10043': 'Manhattan', '10044': 'Manhattan', '10045': 'Manhattan',
+        '10055': 'Manhattan', '10060': 'Manhattan', '10065': 'Manhattan', '10069': 'Manhattan',
+        '10075': 'Manhattan', '10128': 'Manhattan', '10162': 'Manhattan', '10280': 'Manhattan',
+        '10282': 'Manhattan',
+        
+        # Brooklyn
+        '11201': 'Brooklyn', '11202': 'Brooklyn', '11203': 'Brooklyn', '11204': 'Brooklyn',
+        '11205': 'Brooklyn', '11206': 'Brooklyn', '11207': 'Brooklyn', '11208': 'Brooklyn',
+        '11209': 'Brooklyn', '11210': 'Brooklyn', '11211': 'Brooklyn', '11212': 'Brooklyn',
+        '11213': 'Brooklyn', '11214': 'Brooklyn', '11215': 'Brooklyn', '11216': 'Brooklyn',
+        '11217': 'Brooklyn', '11218': 'Brooklyn', '11219': 'Brooklyn', '11220': 'Brooklyn',
+        '11221': 'Brooklyn', '11222': 'Brooklyn', '11223': 'Brooklyn', '11224': 'Brooklyn',
+        '11225': 'Brooklyn', '11226': 'Brooklyn', '11227': 'Brooklyn', '11228': 'Brooklyn',
+        '11229': 'Brooklyn', '11230': 'Brooklyn', '11231': 'Brooklyn', '11232': 'Brooklyn',
+        '11233': 'Brooklyn', '11234': 'Brooklyn', '11235': 'Brooklyn', '11236': 'Brooklyn',
+        '11237': 'Brooklyn', '11238': 'Brooklyn', '11239': 'Brooklyn', '11241': 'Brooklyn',
+        '11242': 'Brooklyn', '11243': 'Brooklyn', '11249': 'Brooklyn', '11251': 'Brooklyn',
+        '11252': 'Brooklyn', '11256': 'Brooklyn',
+        
+        # Queens
+        '11001': 'Queens', '11004': 'Queens', '11005': 'Queens', '11040': 'Queens',
+        '11101': 'Queens', '11102': 'Queens', '11103': 'Queens', '11104': 'Queens',
+        '11105': 'Queens', '11106': 'Queens', '11109': 'Queens', '11354': 'Queens',
+        '11355': 'Queens', '11356': 'Queens', '11357': 'Queens', '11358': 'Queens',
+        '11359': 'Queens', '11360': 'Queens', '11361': 'Queens', '11362': 'Queens',
+        '11363': 'Queens', '11364': 'Queens', '11365': 'Queens', '11366': 'Queens',
+        '11367': 'Queens', '11368': 'Queens', '11369': 'Queens', '11370': 'Queens',
+        '11371': 'Queens', '11372': 'Queens', '11373': 'Queens', '11374': 'Queens',
+        '11375': 'Queens', '11376': 'Queens', '11377': 'Queens', '11378': 'Queens',
+        '11379': 'Queens', '11380': 'Queens', '11381': 'Queens', '11385': 'Queens',
+        '11411': 'Queens', '11412': 'Queens', '11413': 'Queens', '11414': 'Queens',
+        '11415': 'Queens', '11416': 'Queens', '11417': 'Queens', '11418': 'Queens',
+        '11419': 'Queens', '11420': 'Queens', '11421': 'Queens', '11422': 'Queens',
+        '11423': 'Queens', '11424': 'Queens', '11425': 'Queens', '11426': 'Queens',
+        '11427': 'Queens', '11428': 'Queens', '11429': 'Queens', '11430': 'Queens',
+        '11431': 'Queens', '11432': 'Queens', '11433': 'Queens', '11434': 'Queens',
+        '11435': 'Queens', '11436': 'Queens', '11437': 'Queens', '11691': 'Queens',
+        '11692': 'Queens', '11693': 'Queens', '11694': 'Queens', '11695': 'Queens',
+        '11697': 'Queens',
+        
+        # Bronx
+        '10451': 'Bronx', '10452': 'Bronx', '10453': 'Bronx', '10454': 'Bronx',
+        '10455': 'Bronx', '10456': 'Bronx', '10457': 'Bronx', '10458': 'Bronx',
+        '10459': 'Bronx', '10460': 'Bronx', '10461': 'Bronx', '10462': 'Bronx',
+        '10463': 'Bronx', '10464': 'Bronx', '10465': 'Bronx', '10466': 'Bronx',
+        '10467': 'Bronx', '10468': 'Bronx', '10469': 'Bronx', '10470': 'Bronx',
+        '10471': 'Bronx', '10472': 'Bronx', '10473': 'Bronx', '10474': 'Bronx',
+        '10475': 'Bronx',
+        
+        # Staten Island
+        '10301': 'Staten Island', '10302': 'Staten Island', '10303': 'Staten Island',
+        '10304': 'Staten Island', '10305': 'Staten Island', '10306': 'Staten Island',
+        '10307': 'Staten Island', '10308': 'Staten Island', '10309': 'Staten Island',
+        '10310': 'Staten Island', '10311': 'Staten Island', '10312': 'Staten Island',
+        '10313': 'Staten Island', '10314': 'Staten Island'
+    }
+    
+    return zip_to_borough
+
+def map_zip_to_borough(postal_code):
+    """
+    Map a ZIP code to its corresponding NYC borough
+    
+    Args:
+        postal_code (str): ZIP code
+        
+    Returns:
+        str: Borough name or 'Unknown' if not found
+    """
+    if pd.isna(postal_code):
+        return 'Unknown'
+    
+    # Clean the postal code
+    postal_str = str(postal_code).strip()
+    
+    # Handle ZIP+4 format (e.g., "10001-1234")
+    if '-' in postal_str:
+        postal_str = postal_str.split('-')[0]
+    
+    # Pad with zeros if needed (e.g., "1001" -> "01001")
+    if len(postal_str) == 4:
+        postal_str = '0' + postal_str
+    
+    zip_to_borough = get_nyc_zip_borough_mapping()
+    return zip_to_borough.get(postal_str, 'Unknown')
+
+def analyze_substitute_data_by_borough(df_para, df_teacher):
+    """
+    Analyze substitute data by NYC borough
+    
+    Args:
+        df_para (pd.DataFrame): Paraprofessional data
+        df_teacher (pd.DataFrame): Teacher data
+        
+    Returns:
+        dict: Borough analysis results
+    """
+    borough_data = {}
+    
+    # Initialize borough data structure
+    boroughs = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island']
+    for borough in boroughs:
+        borough_data[borough] = {
+            'para_total': 0,
+            'para_eligible': 0,
+            'para_complete': 0,
+            'para_outstanding': 0,
+            'teacher_total': 0,
+            'teacher_eligible': 0,
+            'teacher_complete': 0,
+            'teacher_outstanding': 0,
+            'para_completion_rate': 0,
+            'teacher_completion_rate': 0
+        }
+    
+    # Add unknown category for ZIP codes not in our mapping
+    borough_data['Unknown'] = {
+        'para_total': 0,
+        'para_eligible': 0,
+        'para_complete': 0,
+        'para_outstanding': 0,
+        'teacher_total': 0,
+        'teacher_eligible': 0,
+        'teacher_complete': 0,
+        'teacher_outstanding': 0,
+        'para_completion_rate': 0,
+        'teacher_completion_rate': 0
+    }
+    
+    # Process paraprofessional data
+    if df_para is not None and not df_para.empty:
+        # Map ZIP codes to boroughs
+        df_para['Borough'] = df_para['Postal'].apply(map_zip_to_borough)
+        
+        # Apply eligibility filters (same as main analysis)
+        df_para_eligible = df_para[
+            (df_para['Days Wrkd in School Year'].astype(str) != '0') &
+            (df_para['Days Wrkd in School Year'].astype(str) != 'nan') &
+            (df_para['Days Wrkd in School Year'].notna()) &
+            (df_para['Status'] == 'OUT') &
+            (~df_para['Suspension Reason Code'].isin(['2SS', '2SR']))
+        ].copy()
+        
+        # Calculate completion status
+        df_para_eligible['Complete'] = (
+            (df_para_eligible['Reasonable Assurance'] == 'COMPLETE') &
+            (df_para_eligible['Autism Workshop'] == 'COMPLETE') &
+            (df_para_eligible['Child Abuse Workshop'] == 'COMPLETE') &
+            (df_para_eligible['Violence Prevention Workshop'] == 'COMPLETE') &
+            (df_para_eligible['DASA Workshop'] == 'COMPLETE') &
+            (df_para_eligible['SubHub Training'] == 'PASSED') &
+            (df_para_eligible['State Exam'] == 'PASSED')
+        )
+        
+        # Group by borough
+        para_borough_stats = df_para_eligible.groupby('Borough').agg({
+            'Empl ID': 'count',
+            'Complete': 'sum'
+        }).reset_index()
+        
+        para_borough_stats.columns = ['Borough', 'Total_Eligible', 'Total_Complete']
+        para_borough_stats['Total_Outstanding'] = para_borough_stats['Total_Eligible'] - para_borough_stats['Total_Complete']
+        
+        # Update borough data
+        for _, row in para_borough_stats.iterrows():
+            borough = row['Borough']
+            if borough in borough_data:
+                borough_data[borough]['para_total'] = len(df_para[df_para['Borough'] == borough])
+                borough_data[borough]['para_eligible'] = row['Total_Eligible']
+                borough_data[borough]['para_complete'] = row['Total_Complete']
+                borough_data[borough]['para_outstanding'] = row['Total_Outstanding']
+                borough_data[borough]['para_completion_rate'] = (
+                    row['Total_Complete'] / row['Total_Eligible'] * 100
+                    if row['Total_Eligible'] > 0 else 0
+                )
+    
+    # Process teacher data
+    if df_teacher is not None and not df_teacher.empty:
+        # Map ZIP codes to boroughs
+        df_teacher['Borough'] = df_teacher['Postal'].apply(map_zip_to_borough)
+        
+        # Apply eligibility filters (same as main analysis)
+        df_teacher_eligible = df_teacher[
+            (df_teacher['Days Wrkd in School Year'].astype(str) != '0') &
+            (df_teacher['Days Wrkd in School Year'].astype(str) != 'nan') &
+            (df_teacher['Days Wrkd in School Year'].notna()) &
+            (df_teacher['Status'] == 'OUT') &
+            (~df_teacher['Suspension Reason Code'].isin(['2SS', '2SR']))
+        ].copy()
+        
+        # Filter for PRC/PRU (less than 44 days or more than 43 days)
+        df_teacher_prc_pru = df_teacher_eligible[
+            df_teacher_eligible['Renewal Classification'].isin(['Less than 44', 'More than 43'])
+        ].copy()
+        
+        # Calculate completion status
+        df_teacher_prc_pru['Complete'] = (
+            (df_teacher_prc_pru['Reasonable Assurance'] == 'COMPLETE') &
+            (df_teacher_prc_pru['Autism Workshop'] == 'COMPLETE') &
+            (df_teacher_prc_pru['Child Abuse Workshop'] == 'COMPLETE') &
+            (df_teacher_prc_pru['Violence Prevention Workshop'] == 'COMPLETE') &
+            (df_teacher_prc_pru['DASA Workshop'] == 'COMPLETE') &
+            (df_teacher_prc_pru['SubHub Training'] == 'COMPLETE') &
+            (df_teacher_prc_pru['TEACH Profile'] == 'COMPLETE') &
+            (df_teacher_prc_pru['Bachelor Degree'] == 'COMPLETE')
+        )
+        
+        # Group by borough
+        teacher_borough_stats = df_teacher_prc_pru.groupby('Borough').agg({
+            'Empl ID': 'count',
+            'Complete': 'sum'
+        }).reset_index()
+        
+        teacher_borough_stats.columns = ['Borough', 'Total_Eligible', 'Total_Complete']
+        teacher_borough_stats['Total_Outstanding'] = teacher_borough_stats['Total_Eligible'] - teacher_borough_stats['Total_Complete']
+        
+        # Update borough data
+        for _, row in teacher_borough_stats.iterrows():
+            borough = row['Borough']
+            if borough in borough_data:
+                borough_data[borough]['teacher_total'] = len(df_teacher[df_teacher['Borough'] == borough])
+                borough_data[borough]['teacher_eligible'] = row['Total_Eligible']
+                borough_data[borough]['teacher_complete'] = row['Total_Complete']
+                borough_data[borough]['teacher_outstanding'] = row['Total_Outstanding']
+                borough_data[borough]['teacher_completion_rate'] = (
+                    row['Total_Complete'] / row['Total_Eligible'] * 100
+                    if row['Total_Eligible'] > 0 else 0
+                )
+    
+    return borough_data
+
+def create_nyc_borough_map(borough_data, output_dir):
+    """
+    Create interactive NYC borough map showing substitute data
+    
+    Args:
+        borough_data (dict): Borough analysis results
+        output_dir (str): Output directory for HTML file
+        
+    Returns:
+        str: Path to generated HTML file
+    """
+    # NYC Borough centroids for positioning
+    borough_coords = {
+        'Manhattan': {'lat': 40.7831, 'lon': -73.9712},
+        'Brooklyn': {'lat': 40.6782, 'lon': -73.9442},
+        'Queens': {'lat': 40.7282, 'lon': -73.7949},
+        'Bronx': {'lat': 40.8448, 'lon': -73.8648},
+        'Staten Island': {'lat': 40.5795, 'lon': -74.1502}
+    }
+    
+    # Prepare data for visualization
+    lats = []
+    lons = []
+    borough_names = []
+    para_counts = []
+    teacher_counts = []
+    para_completion_rates = []
+    teacher_completion_rates = []
+    hover_texts = []
+    
+    for borough, coords in borough_coords.items():
+        if borough in borough_data:
+            data = borough_data[borough]
+            
+            lats.append(coords['lat'])
+            lons.append(coords['lon'])
+            borough_names.append(borough)
+            para_counts.append(data['para_eligible'])
+            teacher_counts.append(data['teacher_eligible'])
+            para_completion_rates.append(data['para_completion_rate'])
+            teacher_completion_rates.append(data['teacher_completion_rate'])
+            
+            # Create hover text
+            hover_text = f"""
+            <b>{borough}</b><br>
+            <b>Substitute Paraprofessionals:</b><br>
+            • Total Eligible: {data['para_eligible']:,}<br>
+            • Completed: {data['para_complete']:,}<br>
+            • Outstanding: {data['para_outstanding']:,}<br>
+            • Completion Rate: {data['para_completion_rate']:.1f}%<br>
+            <br>
+            <b>Substitute Teachers:</b><br>
+            • Total Eligible: {data['teacher_eligible']:,}<br>
+            • Completed: {data['teacher_complete']:,}<br>
+            • Outstanding: {data['teacher_outstanding']:,}<br>
+            • Completion Rate: {data['teacher_completion_rate']:.1f}%
+            """
+            hover_texts.append(hover_text)
+    
+    # Create the map
+    fig = go.Figure()
+    
+    # Add scatter points for each borough
+    fig.add_trace(go.Scattermapbox(
+        lat=lats,
+        lon=lons,
+        mode='markers',
+        marker=dict(
+            size=[max(20, min(80, count/10)) for count in para_counts],  # Size based on para count
+            color=para_completion_rates,
+            colorscale='RdYlGn',
+            cmin=0,
+            cmax=100,
+            colorbar=dict(
+                title="Para Completion Rate (%)",
+                titleside="right",
+                tickmode="linear",
+                tick0=0,
+                dtick=20
+            ),
+            sizemode='diameter',
+            line=dict(width=2, color='darkblue')
+        ),
+        text=borough_names,
+        hovertext=hover_texts,
+        hoverinfo='text',
+        name='Paraprofessionals'
+    ))
+    
+    # Add a second trace for teachers (smaller circles)
+    fig.add_trace(go.Scattermapbox(
+        lat=lats,
+        lon=lons,
+        mode='markers',
+        marker=dict(
+            size=[max(15, min(60, count/15)) for count in teacher_counts],  # Size based on teacher count
+            color=teacher_completion_rates,
+            colorscale='Blues',
+            cmin=0,
+            cmax=100,
+            colorbar=dict(
+                title="Teacher Completion Rate (%)",
+                titleside="right",
+                tickmode="linear",
+                tick0=0,
+                dtick=20,
+                x=1.1  # Position to the right
+            ),
+            sizemode='diameter',
+            line=dict(width=2, color='darkgreen'),
+            opacity=0.7
+        ),
+        text=borough_names,
+        hovertext=hover_texts,
+        hoverinfo='text',
+        name='Teachers'
+    ))
+    
+    # Update layout
+    fig.update_layout(
+        title=dict(
+            text="NYC Substitute Renewal Analytics by Borough",
+            x=0.5,
+            font=dict(size=24, color='#2c3e50', family='Arial Black')
+        ),
+        mapbox=dict(
+            style='open-street-map',
+            center=dict(lat=40.7128, lon=-73.9060),  # NYC center
+            zoom=9.5
+        ),
+        height=800,
+        width=1200,
+        margin=dict(l=0, r=0, t=60, b=0),
+        legend=dict(
+            x=0.02,
+            y=0.98,
+            bgcolor='rgba(255,255,255,0.8)',
+            bordercolor='rgba(0,0,0,0.2)',
+            borderwidth=1
+        ),
+        annotations=[
+            dict(
+                x=0.02,
+                y=0.02,
+                xref='paper',
+                yref='paper',
+                text='<b>Circle Size:</b> Number of Eligible Substitutes<br><b>Color:</b> Completion Rate',
+                showarrow=False,
+                bgcolor='rgba(255,255,255,0.8)',
+                bordercolor='rgba(0,0,0,0.2)',
+                borderwidth=1,
+                font=dict(size=10)
+            )
+        ]
+    )
+    
+    # Save as HTML
+    output_file = os.path.join(output_dir, 'nyc_borough_map.html')
+    fig.write_html(output_file)
+    
+    return output_file
+
 def main():
     """
     Main execution function
@@ -1679,6 +2099,16 @@ def main():
         chart_files = create_visualization_charts(para_results, teacher_results, OUTPUT_DIR)
         print("✓ Visualization charts created")
         
+        # Generate borough analysis and map
+        print("\nGenerating Borough Analysis...")
+        borough_data = analyze_substitute_data_by_borough(df_para, df_teacher)
+        try:
+            borough_map_file = create_nyc_borough_map(borough_data, OUTPUT_DIR)
+            print(f"✓ Borough map generated: {borough_map_file}")
+        except Exception as e:
+            print(f"⚠ Borough map generation failed: {str(e)}")
+            borough_map_file = None
+        
         # Generate HTML report with differences
         print("\nGenerating HTML Report...")
         has_comparison_data = (has_old_para or has_old_teacher)
@@ -1736,6 +2166,38 @@ def main():
         print(f"  • Main Report: {report_file}")
         print(f"  • Charts Directory: {OUTPUT_DIR}")
         print(f"  • Charts: {', '.join([os.path.basename(f) for f in chart_files])}")
+        if borough_map_file:
+            print(f"  • Borough Map: {borough_map_file}")
+        
+        # Print borough summary
+        print(f"\n🗺️  Borough Distribution Summary:")
+        total_para_eligible = sum(borough_data[b]['para_eligible'] for b in borough_data if b != 'Unknown')
+        total_teacher_eligible = sum(borough_data[b]['teacher_eligible'] for b in borough_data if b != 'Unknown')
+        
+        for borough in ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island']:
+            if borough in borough_data:
+                data = borough_data[borough]
+                if data['para_eligible'] > 0 or data['teacher_eligible'] > 0:
+                    print(f"  • {borough}:")
+                    if data['para_eligible'] > 0:
+                        print(f"    - Paras: {data['para_eligible']:,} eligible ({data['para_completion_rate']:.1f}% complete)")
+                    if data['teacher_eligible'] > 0:
+                        print(f"    - Teachers: {data['teacher_eligible']:,} eligible ({data['teacher_completion_rate']:.1f}% complete)")
+        
+        if borough_data.get('Unknown', {}).get('para_eligible', 0) > 0 or borough_data.get('Unknown', {}).get('teacher_eligible', 0) > 0:
+            unknown_data = borough_data['Unknown']
+            print(f"  • Unknown/Other Areas:")
+            if unknown_data['para_eligible'] > 0:
+                print(f"    - Paras: {unknown_data['para_eligible']:,} eligible ({unknown_data['para_completion_rate']:.1f}% complete)")
+            if unknown_data['teacher_eligible'] > 0:
+                print(f"    - Teachers: {unknown_data['teacher_eligible']:,} eligible ({unknown_data['teacher_completion_rate']:.1f}% complete)")
+        
+        print(f"\nOutput Files:")
+        print(f"  • Main Report: {report_file}")
+        print(f"  • Charts Directory: {OUTPUT_DIR}")
+        print(f"  • Charts: {', '.join([os.path.basename(f) for f in chart_files])}")
+        if borough_map_file:
+            print(f"  • Borough Map: {borough_map_file}")
         
         print("\n✓ Analysis completed successfully!")
         

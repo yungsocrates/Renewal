@@ -183,10 +183,11 @@
             .progress-bar {
                 height: 100%;
                 border-radius: 25px;
-                background: linear-gradient(45deg, #28a745, #20c997);
+                background: linear-gradient(45deg, #1e3a8a, #3b82f6, #60a5fa);
                 transition: width 1.5s ease-in-out;
                 position: relative;
                 overflow: hidden;
+                box-shadow: 0 2px 4px rgba(30, 58, 138, 0.3);
             }
             .progress-bar::before {
                 content: '';
@@ -196,24 +197,24 @@
                 bottom: 0;
                 right: 0;
                 background-image: linear-gradient(
-                    -45deg,
-                    rgba(255, 255, 255, .2) 25%,
+                    45deg,
+                    rgba(255, 255, 255, 0.3) 25%,
                     transparent 25%,
                     transparent 50%,
-                    rgba(255, 255, 255, .2) 50%,
-                    rgba(255, 255, 255, .2) 75%,
+                    rgba(255, 255, 255, 0.3) 50%,
+                    rgba(255, 255, 255, 0.3) 75%,
                     transparent 75%,
                     transparent
                 );
-                background-size: 50px 50px;
-                animation: move 2s linear infinite;
+                background-size: 30px 30px;
+                animation: chevronMove 1.5s linear infinite;
             }
-            @keyframes move {
+            @keyframes chevronMove {
                 0% {
-                    background-position: 0 0;
+                    background-position: -30px 0;
                 }
                 100% {
-                    background-position: 50px 50px;
+                    background-position: 30px 0;
                 }
             }
             .progress-text {
@@ -244,7 +245,7 @@
             <div class="header-text">
                 <h1>Substitute Renewal Analytics Dashboard</h1>
                 <h2>Comprehensive Analysis of Substitute Teacher and Paraprofessional Renewal Data</h2>
-                <p class="date-info">Generated on: July 08, 2025 at 03:17 PM | Changes from previous data shown with ▲/▼ indicators</p>
+                <p class="date-info">Generated on: July 09, 2025 at 10:06 AM | Changes from previous data shown with ▲/▼ indicators</p>
             </div>
             <div class="header-logo">
                 <img src="Horizontal_logo_White_PublicSchools.png" alt="NYC Public Schools" class="logo">
@@ -259,28 +260,28 @@
                 <h3>Key Performance Indicators</h3>
                 <div class="metrics-grid">
                     <div class="metric-card">
-                        <div class="metric-value">14,305<br><small style="color: #ff8c00; font-weight: bold;">▼ -6</small></div>
+                        <div class="metric-value">14,305</div>
                         <div class="metric-label">Total SPAs Eligible for Renewal</div>
                     </div>
                     <div class="metric-card-with-progress">
-                        <div class="metric-value">46.2%<br><small style="color: #ff8c00; font-weight: bold;">▲ +0.7%</small></div>
+                        <div class="metric-value">47.1%<br><small style="color: #ff8c00; font-weight: bold;">▲ +0.9%</small></div>
                         <div class="metric-label">SPA Completion Rate</div>
                         <div class="progress-container">
-                            <div class="progress-bar" style="width: 46.2%;"></div>
+                            <div class="progress-bar" style="width: 47.1%;"></div>
                         </div>
-                        <div class="progress-text">6,606 of 14,305 completed</div>
+                        <div class="progress-text">6,740 of 14,305 completed</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value">10,574<br><small style="color: #ff8c00; font-weight: bold;">▼ -1</small></div>
+                        <div class="metric-value">10,573<br><small style="color: #ff8c00; font-weight: bold;">▼ -1</small></div>
                         <div class="metric-label">Total STEs (PRC/PRU) Eligible</div>
                     </div>
                     <div class="metric-card-with-progress">
-                        <div class="metric-value">53.2%<br><small style="color: #ff8c00; font-weight: bold;">▲ +0.9%</small></div>
+                        <div class="metric-value">53.6%<br><small style="color: #ff8c00; font-weight: bold;">▲ +0.4%</small></div>
                         <div class="metric-label">STE Completion Rate</div>
                         <div class="progress-container">
-                            <div class="progress-bar" style="width: 53.2%;"></div>
+                            <div class="progress-bar" style="width: 53.6%;"></div>
                         </div>
-                        <div class="progress-text">5,628 of 10,574 completed</div>
+                        <div class="progress-text">5,670 of 10,573 completed</div>
                     </div>
                 </div>
             </div>
@@ -290,19 +291,19 @@
             <h2>Substitute Paraprofessionals (SPA) Analysis</h2>
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">14,305<br><small style="color: #ff8c00; font-weight: bold;">▼ -6</small></div>
+                    <div class="metric-value">14,305</div>
                     <div class="metric-label">Total SPAs Eligible for Renewal</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">6,606<br><small style="color: #ff8c00; font-weight: bold;">▲ +104</small></div>
+                    <div class="metric-value">6,740<br><small style="color: #ff8c00; font-weight: bold;">▲ +134</small></div>
                     <div class="metric-label">Total Completed Renewal</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">7,699<br><small style="color: #ff8c00; font-weight: bold;">▼ -110</small></div>
+                    <div class="metric-value">7,565<br><small style="color: #ff8c00; font-weight: bold;">▼ -134</small></div>
                     <div class="metric-label">Total Outstanding</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">1,707<br><small style="color: #ff8c00; font-weight: bold;">▼ -120</small></div>
+                    <div class="metric-value">1,657<br><small style="color: #ff8c00; font-weight: bold;">▼ -50</small></div>
                     <div class="metric-label">RA NOT Complete</div>
                 </div>
             </div>
@@ -310,30 +311,30 @@
             <h3>Requirements Analysis</h3>
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">5,992<br><small style="color: #ff8c00; font-weight: bold;">▲ +10</small></div>
+                    <div class="metric-value">5,908<br><small style="color: #ff8c00; font-weight: bold;">▼ -84</small></div>
                     <div class="metric-label">RA Complete, Other Requirements Outstanding</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">2,359<br><small style="color: #ff8c00; font-weight: bold;">▲ +13</small></div>
+                    <div class="metric-value">2,360<br><small style="color: #ff8c00; font-weight: bold;">▲ +1</small></div>
                     <div class="metric-label">Days Worked Only</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">1,580<br><small style="color: #ff8c00; font-weight: bold;">▲ +4</small></div>
+                    <div class="metric-value">1,523<br><small style="color: #ff8c00; font-weight: bold;">▼ -57</small></div>
                     <div class="metric-label">ATAS Only</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">2,189<br><small style="color: #ff8c00; font-weight: bold;">▼ -9</small></div>
+                    <div class="metric-value">2,163<br><small style="color: #ff8c00; font-weight: bold;">▼ -26</small></div>
                     <div class="metric-label">Child Abuse Workshop Only</div>
                 </div>
             </div>
             
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">182<br><small style="color: #ff8c00; font-weight: bold;">▼ -2</small></div>
-                    <div class="metric-label">Days & ATAS/Autism/Other Requirements</div>
+                    <div class="metric-value">184<br><small style="color: #ff8c00; font-weight: bold;">▲ +2</small></div>
+                    <div class="metric-label">Days & ATAS/Child Abuse/Other Requirements</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">306<br><small style="color: #ff8c00; font-weight: bold;">▼ -3</small></div>
+                    <div class="metric-value">305<br><small style="color: #ff8c00; font-weight: bold;">▼ -1</small></div>
                     <div class="metric-label">Total Suspended 2SS</div>
                 </div>
                 <div class="metric-card">
@@ -347,19 +348,19 @@
             <h2>Substitute Teachers (STE) Analysis</h2>
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">13,089<br><small style="color: #ff8c00; font-weight: bold;">▼ -1</small></div>
+                    <div class="metric-value">13,088<br><small style="color: #ff8c00; font-weight: bold;">▼ -1</small></div>
                     <div class="metric-label">Total STEs Eligible for Renewal</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">10,574<br><small style="color: #ff8c00; font-weight: bold;">▼ -1</small></div>
+                    <div class="metric-value">10,573<br><small style="color: #ff8c00; font-weight: bold;">▼ -1</small></div>
                     <div class="metric-label">Total Certified (PRC) and Uncertified (PRU) Eligible</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">5,628<br><small style="color: #ff8c00; font-weight: bold;">▲ +90</small></div>
+                    <div class="metric-value">5,670<br><small style="color: #ff8c00; font-weight: bold;">▲ +42</small></div>
                     <div class="metric-label">Total PRC & PRU Completed Renewal</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">4,946<br><small style="color: #ff8c00; font-weight: bold;">▼ -91</small></div>
+                    <div class="metric-value">4,903<br><small style="color: #ff8c00; font-weight: bold;">▼ -43</small></div>
                     <div class="metric-label">Total PRC & PRU Outstanding</div>
                 </div>
             </div>
@@ -367,30 +368,30 @@
             <h3>PRC & PRU Requirements Analysis</h3>
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">1,735<br><small style="color: #ff8c00; font-weight: bold;">▼ -99</small></div>
+                    <div class="metric-value">1,709<br><small style="color: #ff8c00; font-weight: bold;">▼ -26</small></div>
                     <div class="metric-label">PRC & PRU - RA Not Complete</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">3,211<br><small style="color: #ff8c00; font-weight: bold;">▲ +8</small></div>
+                    <div class="metric-value">3,194<br><small style="color: #ff8c00; font-weight: bold;">▼ -17</small></div>
                     <div class="metric-label">PRC & PRU - Met RA, Other Requirements Outstanding</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">1,316<br><small style="color: #ff8c00; font-weight: bold;">▲ +18</small></div>
+                    <div class="metric-value">1,318<br><small style="color: #ff8c00; font-weight: bold;">▲ +2</small></div>
                     <div class="metric-label">Days Worked Only</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">1,501<br><small style="color: #ff8c00; font-weight: bold;">▼ -10</small></div>
+                    <div class="metric-value">1,478<br><small style="color: #ff8c00; font-weight: bold;">▼ -23</small></div>
                     <div class="metric-label">Child Abuse Workshop Only</div>
                 </div>
             </div>
             
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">1,467<br><small style="color: #ff8c00; font-weight: bold;">▼ -9</small></div>
+                    <div class="metric-value">1,443<br><small style="color: #ff8c00; font-weight: bold;">▼ -24</small></div>
                     <div class="metric-label">Other Requirements Only</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">107<br><small style="color: #ff8c00; font-weight: bold;">▲ +1</small></div>
+                    <div class="metric-value">107</div>
                     <div class="metric-label">Days & Other Requirements</div>
                 </div>
             </div>
@@ -406,18 +407,18 @@
                     <div class="metric-label">Total Retirees (PRR)</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">1,949<br><small style="color: #ff8c00; font-weight: bold;">▲ +28</small></div>
+                    <div class="metric-value">1,953<br><small style="color: #ff8c00; font-weight: bold;">▲ +4</small></div>
                     <div class="metric-label">Total PRR Completed Renewal</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">437<br><small style="color: #ff8c00; font-weight: bold;">▼ -28</small></div>
+                    <div class="metric-value">433<br><small style="color: #ff8c00; font-weight: bold;">▼ -4</small></div>
                     <div class="metric-label">Total PRR Outstanding</div>
                 </div>
             </div>
             
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">311<br><small style="color: #ff8c00; font-weight: bold;">▼ -7</small></div>
+                    <div class="metric-value">311</div>
                     <div class="metric-label">Total Suspended 2SS</div>
                 </div>
                 <div class="metric-card">

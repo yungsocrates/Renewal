@@ -500,8 +500,6 @@ def analyze_substitute_teachers(df_teacher):
                 row.get('Violence Prevention Workshop', ''),
                 row.get('DASA Workshop', ''),
                 row.get('SubHub Training', ''),
-                row.get('State Exam', ''),
-                row.get('Ed Credits', ''),
                 row.get('TEACH Profile', ''),
                 row.get('Bachelor Degree', ''),
                 row.get('Autism Workshop', '')
@@ -549,8 +547,6 @@ def analyze_substitute_teachers(df_teacher):
                     row.get('Violence Prevention Workshop', ''),
                     row.get('DASA Workshop', ''),
                     row.get('SubHub Training', ''),
-                    row.get('State Exam', ''),
-                    row.get('Ed Credits', ''),
                     row.get('TEACH Profile', ''),
                     row.get('Bachelor Degree', '')
                 ]
@@ -579,8 +575,6 @@ def analyze_substitute_teachers(df_teacher):
                 row.get('Violence Prevention Workshop', ''),
                 row.get('DASA Workshop', ''),
                 row.get('SubHub Training', ''),
-                row.get('State Exam', ''),
-                row.get('Ed Credits', ''),
                 row.get('Autism Workshop', ''),
                 row.get('TEACH Profile', ''),
                 row.get('Bachelor Degree', '')
@@ -1145,10 +1139,11 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
             .progress-bar {{
                 height: 100%;
                 border-radius: 25px;
-                background: linear-gradient(45deg, #28a745, #20c997);
+                background: linear-gradient(45deg, #1e3a8a, #3b82f6, #60a5fa);
                 transition: width 1.5s ease-in-out;
                 position: relative;
                 overflow: hidden;
+                box-shadow: 0 2px 4px rgba(30, 58, 138, 0.3);
             }}
             .progress-bar::before {{
                 content: '';
@@ -1158,24 +1153,24 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
                 bottom: 0;
                 right: 0;
                 background-image: linear-gradient(
-                    -45deg,
-                    rgba(255, 255, 255, .2) 25%,
+                    45deg,
+                    rgba(255, 255, 255, 0.3) 25%,
                     transparent 25%,
                     transparent 50%,
-                    rgba(255, 255, 255, .2) 50%,
-                    rgba(255, 255, 255, .2) 75%,
+                    rgba(255, 255, 255, 0.3) 50%,
+                    rgba(255, 255, 255, 0.3) 75%,
                     transparent 75%,
                     transparent
                 );
-                background-size: 50px 50px;
-                animation: move 2s linear infinite;
+                background-size: 30px 30px;
+                animation: chevronMove 1.5s linear infinite;
             }}
-            @keyframes move {{
+            @keyframes chevronMove {{
                 0% {{
-                    background-position: 0 0;
+                    background-position: -30px 0;
                 }}
                 100% {{
-                    background-position: 50px 50px;
+                    background-position: 30px 0;
                 }}
             }}
             .progress-text {{
@@ -1283,7 +1278,7 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
             <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="metric-value">{format_metric_with_diff(para_results.get('days_and_other_requirements', 0), para_differences.get('days_and_other_requirements', '0'), has_comparison)}</div>
-                    <div class="metric-label">Days & ATAS/Autism/Other Requirements</div>
+                    <div class="metric-label">Days & ATAS/Child Abuse/Other Requirements</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-value">{format_metric_with_diff(para_results.get('total_suspended_2ss', 0), para_differences.get('total_suspended_2ss', '0'), has_comparison)}</div>

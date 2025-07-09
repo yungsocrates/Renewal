@@ -5,6 +5,45 @@ All notable changes to the NYCDOE Substitute Renewal Analytics Dashboard will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2025-01-17
+
+### Added
+- **Interactive NYC Borough Map**: Geographic visualization of substitute renewal data
+  - Plotly-powered interactive map showing all five NYC boroughs
+  - Color-coded completion rates with size indicating total eligible counts
+  - Dual data visualization for both teachers and paraprofessionals
+  - Accurate ZIP code to borough mapping with enhanced format handling
+  - Standalone HTML file generation (`nyc_borough_map.html`) for local viewing
+  - Seamless integration with main dashboard via iframe embedding
+- **Enhanced ZIP Code Processing**: Robust geographic data handling
+  - Converts all postal codes to strings for consistent processing
+  - Handles ZIP+4 format (e.g., "10001-1234") and decimal conversions
+  - Standardized ZIP code mapping to NYC boroughs with debugging verification
+  - Improved data accuracy with comprehensive format support
+
+### Enhanced
+- **Borough Analysis Accuracy**: Simplified and improved filtering logic
+  - Consistent eligibility filtering using Status field only (COMP vs OUT)
+  - Realistic distribution across all five NYC boroughs
+  - Accurate completion counts and rates for geographic analysis
+  - Enhanced data debugging and verification outputs
+- **Visual Design Improvements**: Professional legend and colorbar positioning
+  - Positioned colorbars on opposite sides of the map to prevent overlap
+  - Vertical legend titles for better space utilization
+  - Clear distinction between teacher and paraprofessional data
+  - Enhanced map readability and professional presentation
+- **Local Development Workflow**: Improved testing and viewing capabilities
+  - Added local web server instructions for proper iframe viewing
+  - Enhanced documentation for local development and testing
+  - Better integration between standalone map and main dashboard
+
+### Technical
+- Implemented `create_nyc_borough_map()` function with Plotly Offline
+- Added comprehensive ZIP code validation and mapping logic
+- Enhanced borough assignment with debugging and verification
+- Improved HTML generation with proper iframe integration
+- Added geographic data processing with error handling
+
 ## [1.4.1] - 2025-07-08
 
 ### Enhanced

@@ -1579,74 +1579,31 @@ def get_nyc_zip_borough_mapping():
     Returns a dictionary mapping NYC ZIP codes to boroughs
     Based on official NYC ZIP code boundaries
     """
-    zip_to_borough = {
-        # Manhattan
-        '10001': 'Manhattan', '10002': 'Manhattan', '10003': 'Manhattan', '10004': 'Manhattan',
-        '10005': 'Manhattan', '10006': 'Manhattan', '10007': 'Manhattan', '10008': 'Manhattan',
-        '10009': 'Manhattan', '10010': 'Manhattan', '10011': 'Manhattan', '10012': 'Manhattan',
-        '10013': 'Manhattan', '10014': 'Manhattan', '10015': 'Manhattan', '10016': 'Manhattan',
-        '10017': 'Manhattan', '10018': 'Manhattan', '10019': 'Manhattan', '10020': 'Manhattan',
-        '10021': 'Manhattan', '10022': 'Manhattan', '10023': 'Manhattan', '10024': 'Manhattan',
-        '10025': 'Manhattan', '10026': 'Manhattan', '10027': 'Manhattan', '10028': 'Manhattan',
-        '10029': 'Manhattan', '10030': 'Manhattan', '10031': 'Manhattan', '10032': 'Manhattan',
-        '10033': 'Manhattan', '10034': 'Manhattan', '10035': 'Manhattan', '10036': 'Manhattan',
-        '10037': 'Manhattan', '10038': 'Manhattan', '10039': 'Manhattan', '10040': 'Manhattan',
-        '10041': 'Manhattan', '10043': 'Manhattan', '10044': 'Manhattan', '10045': 'Manhattan',
-        '10055': 'Manhattan', '10060': 'Manhattan', '10065': 'Manhattan', '10069': 'Manhattan',
-        '10075': 'Manhattan', '10128': 'Manhattan', '10162': 'Manhattan', '10280': 'Manhattan',
-        '10282': 'Manhattan',
-        
-        # Brooklyn
-        '11201': 'Brooklyn', '11202': 'Brooklyn', '11203': 'Brooklyn', '11204': 'Brooklyn',
-        '11205': 'Brooklyn', '11206': 'Brooklyn', '11207': 'Brooklyn', '11208': 'Brooklyn',
-        '11209': 'Brooklyn', '11210': 'Brooklyn', '11211': 'Brooklyn', '11212': 'Brooklyn',
-        '11213': 'Brooklyn', '11214': 'Brooklyn', '11215': 'Brooklyn', '11216': 'Brooklyn',
-        '11217': 'Brooklyn', '11218': 'Brooklyn', '11219': 'Brooklyn', '11220': 'Brooklyn',
-        '11221': 'Brooklyn', '11222': 'Brooklyn', '11223': 'Brooklyn', '11224': 'Brooklyn',
-        '11225': 'Brooklyn', '11226': 'Brooklyn', '11227': 'Brooklyn', '11228': 'Brooklyn',
-        '11229': 'Brooklyn', '11230': 'Brooklyn', '11231': 'Brooklyn', '11232': 'Brooklyn',
-        '11233': 'Brooklyn', '11234': 'Brooklyn', '11235': 'Brooklyn', '11236': 'Brooklyn',
-        '11237': 'Brooklyn', '11238': 'Brooklyn', '11239': 'Brooklyn', '11241': 'Brooklyn',
-        '11242': 'Brooklyn', '11243': 'Brooklyn', '11249': 'Brooklyn', '11251': 'Brooklyn',
-        '11252': 'Brooklyn', '11256': 'Brooklyn',
-        
-        # Queens
-        '11001': 'Queens', '11004': 'Queens', '11005': 'Queens', '11040': 'Queens',
-        '11101': 'Queens', '11102': 'Queens', '11103': 'Queens', '11104': 'Queens',
-        '11105': 'Queens', '11106': 'Queens', '11109': 'Queens', '11354': 'Queens',
-        '11355': 'Queens', '11356': 'Queens', '11357': 'Queens', '11358': 'Queens',
-        '11359': 'Queens', '11360': 'Queens', '11361': 'Queens', '11362': 'Queens',
-        '11363': 'Queens', '11364': 'Queens', '11365': 'Queens', '11366': 'Queens',
-        '11367': 'Queens', '11368': 'Queens', '11369': 'Queens', '11370': 'Queens',
-        '11371': 'Queens', '11372': 'Queens', '11373': 'Queens', '11374': 'Queens',
-        '11375': 'Queens', '11376': 'Queens', '11377': 'Queens', '11378': 'Queens',
-        '11379': 'Queens', '11380': 'Queens', '11381': 'Queens', '11385': 'Queens',
-        '11411': 'Queens', '11412': 'Queens', '11413': 'Queens', '11414': 'Queens',
-        '11415': 'Queens', '11416': 'Queens', '11417': 'Queens', '11418': 'Queens',
-        '11419': 'Queens', '11420': 'Queens', '11421': 'Queens', '11422': 'Queens',
-        '11423': 'Queens', '11424': 'Queens', '11425': 'Queens', '11426': 'Queens',
-        '11427': 'Queens', '11428': 'Queens', '11429': 'Queens', '11430': 'Queens',
-        '11431': 'Queens', '11432': 'Queens', '11433': 'Queens', '11434': 'Queens',
-        '11435': 'Queens', '11436': 'Queens', '11437': 'Queens', '11691': 'Queens',
-        '11692': 'Queens', '11693': 'Queens', '11694': 'Queens', '11695': 'Queens',
-        '11697': 'Queens',
-        
-        # Bronx
-        '10451': 'Bronx', '10452': 'Bronx', '10453': 'Bronx', '10454': 'Bronx',
-        '10455': 'Bronx', '10456': 'Bronx', '10457': 'Bronx', '10458': 'Bronx',
-        '10459': 'Bronx', '10460': 'Bronx', '10461': 'Bronx', '10462': 'Bronx',
-        '10463': 'Bronx', '10464': 'Bronx', '10465': 'Bronx', '10466': 'Bronx',
-        '10467': 'Bronx', '10468': 'Bronx', '10469': 'Bronx', '10470': 'Bronx',
-        '10471': 'Bronx', '10472': 'Bronx', '10473': 'Bronx', '10474': 'Bronx',
-        '10475': 'Bronx',
-        
-        # Staten Island
-        '10301': 'Staten Island', '10302': 'Staten Island', '10303': 'Staten Island',
-        '10304': 'Staten Island', '10305': 'Staten Island', '10306': 'Staten Island',
-        '10307': 'Staten Island', '10308': 'Staten Island', '10309': 'Staten Island',
-        '10310': 'Staten Island', '10311': 'Staten Island', '10312': 'Staten Island',
-        '10313': 'Staten Island', '10314': 'Staten Island'
-    }
+    zip_to_borough = {}
+    
+    # Manhattan: 10001-10282
+    for zip_code in range(10001, 10283):
+        zip_to_borough[str(zip_code)] = 'Manhattan'
+    
+    # Brooklyn: 11201-11256
+    for zip_code in range(11201, 11257):
+        zip_to_borough[str(zip_code)] = 'Brooklyn'
+    
+    # Queens: 11004-11005, 11101-11109, 11351-11697
+    for zip_code in range(11004, 11006):
+        zip_to_borough[str(zip_code)] = 'Queens'
+    for zip_code in range(11101, 11110):
+        zip_to_borough[str(zip_code)] = 'Queens'
+    for zip_code in range(11351, 11698):
+        zip_to_borough[str(zip_code)] = 'Queens'
+    
+    # Bronx: 10451-10475
+    for zip_code in range(10451, 10476):
+        zip_to_borough[str(zip_code)] = 'Bronx'
+    
+    # Staten Island: 10301-10314
+    for zip_code in range(10301, 10315):
+        zip_to_borough[str(zip_code)] = 'Staten Island'
     
     return zip_to_borough
 
@@ -1660,30 +1617,42 @@ def map_zip_to_borough(postal_code):
     Returns:
         str: Borough name or 'Unknown' if not found
     """
-    if pd.isna(postal_code):
+    if pd.isna(postal_code) or postal_code in ['nan', 'None', '']:
         return 'Unknown'
     
-    # Clean the postal code
-    postal_str = str(postal_code).strip()
+    # Clean the postal code - convert to string and strip whitespace
+    postal_str = str(postal_code).strip().upper()
+    
+    # Handle common variations
+    if postal_str in ['NAN', 'NONE', '', '0', '0.0']:
+        return 'Unknown'
     
     # Handle ZIP+4 format (e.g., "10001-1234")
     if '-' in postal_str:
         postal_str = postal_str.split('-')[0]
     
+    # Handle decimal format (e.g., "10001.0")
+    if '.' in postal_str:
+        postal_str = postal_str.split('.')[0]
+    
     # Pad with zeros if needed (e.g., "1001" -> "01001")
-    if len(postal_str) == 4:
+    if len(postal_str) == 4 and postal_str.isdigit():
         postal_str = '0' + postal_str
+    
+    # Only process if it's a valid 5-digit number
+    if not (postal_str.isdigit() and len(postal_str) == 5):
+        return 'Unknown'
     
     zip_to_borough = get_nyc_zip_borough_mapping()
     return zip_to_borough.get(postal_str, 'Unknown')
 
 def analyze_substitute_data_by_borough(df_para, df_teacher):
     """
-    Analyze substitute data by NYC borough
+    Analyze substitute data by NYC borough using existing Borough column
     
     Args:
-        df_para (pd.DataFrame): Paraprofessional data
-        df_teacher (pd.DataFrame): Teacher data
+        df_para (pd.DataFrame): Paraprofessional data with Borough column
+        df_teacher (pd.DataFrame): Teacher data with Borough column
         
     Returns:
         dict: Borough analysis results
@@ -1691,7 +1660,7 @@ def analyze_substitute_data_by_borough(df_para, df_teacher):
     borough_data = {}
     
     # Initialize borough data structure
-    boroughs = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island']
+    boroughs = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island', 'Unknown']
     for borough in boroughs:
         borough_data[borough] = {
             'para_total': 0,
@@ -1706,44 +1675,21 @@ def analyze_substitute_data_by_borough(df_para, df_teacher):
             'teacher_completion_rate': 0
         }
     
-    # Add unknown category for ZIP codes not in our mapping
-    borough_data['Unknown'] = {
-        'para_total': 0,
-        'para_eligible': 0,
-        'para_complete': 0,
-        'para_outstanding': 0,
-        'teacher_total': 0,
-        'teacher_eligible': 0,
-        'teacher_complete': 0,
-        'teacher_outstanding': 0,
-        'para_completion_rate': 0,
-        'teacher_completion_rate': 0
-    }
-    
     # Process paraprofessional data
     if df_para is not None and not df_para.empty:
-        # Map ZIP codes to boroughs
-        df_para['Borough'] = df_para['Postal'].apply(map_zip_to_borough)
+        print(f"Processing {len(df_para)} paraprofessional records for borough analysis...")
         
-        # Apply eligibility filters (same as main analysis)
-        df_para_eligible = df_para[
-            (df_para['Days Wrkd in School Year'].astype(str) != '0') &
-            (df_para['Days Wrkd in School Year'].astype(str) != 'nan') &
-            (df_para['Days Wrkd in School Year'].notna()) &
-            (df_para['Status'] == 'OUT') &
-            (~df_para['Suspension Reason Code'].isin(['2SS', '2SR']))
-        ].copy()
+        # Get total counts by borough from ALL data
+        para_total_by_borough = df_para.groupby('Borough').size().to_dict()
+        print(f"Para totals by borough: {para_total_by_borough}")
         
-        # Calculate completion status
-        df_para_eligible['Complete'] = (
-            (df_para_eligible['Reasonable Assurance'] == 'COMPLETE') &
-            (df_para_eligible['Autism Workshop'] == 'COMPLETE') &
-            (df_para_eligible['Child Abuse Workshop'] == 'COMPLETE') &
-            (df_para_eligible['Violence Prevention Workshop'] == 'COMPLETE') &
-            (df_para_eligible['DASA Workshop'] == 'COMPLETE') &
-            (df_para_eligible['SubHub Training'] == 'PASSED') &
-            (df_para_eligible['State Exam'] == 'PASSED')
-        )
+        # Only filter by Status for borough analysis - much simpler
+        df_para_eligible = df_para[df_para['Status'].notna()].copy()
+        
+        print(f"Para records with status: {len(df_para_eligible)}")
+        
+        # Calculate completion status - just check if Status is 'COMP' vs 'OUT'
+        df_para_eligible['Complete'] = (df_para_eligible['Status'] == 'COMP')
         
         # Group by borough
         para_borough_stats = df_para_eligible.groupby('Borough').agg({
@@ -1754,11 +1700,13 @@ def analyze_substitute_data_by_borough(df_para, df_teacher):
         para_borough_stats.columns = ['Borough', 'Total_Eligible', 'Total_Complete']
         para_borough_stats['Total_Outstanding'] = para_borough_stats['Total_Eligible'] - para_borough_stats['Total_Complete']
         
+        print(f"Para borough stats:\n{para_borough_stats}")
+        
         # Update borough data
         for _, row in para_borough_stats.iterrows():
             borough = row['Borough']
             if borough in borough_data:
-                borough_data[borough]['para_total'] = len(df_para[df_para['Borough'] == borough])
+                borough_data[borough]['para_total'] = para_total_by_borough.get(borough, 0)
                 borough_data[borough]['para_eligible'] = row['Total_Eligible']
                 borough_data[borough]['para_complete'] = row['Total_Complete']
                 borough_data[borough]['para_outstanding'] = row['Total_Outstanding']
@@ -1769,37 +1717,22 @@ def analyze_substitute_data_by_borough(df_para, df_teacher):
     
     # Process teacher data
     if df_teacher is not None and not df_teacher.empty:
-        # Map ZIP codes to boroughs
-        df_teacher['Borough'] = df_teacher['Postal'].apply(map_zip_to_borough)
+        print(f"Processing {len(df_teacher)} teacher records for borough analysis...")
         
-        # Apply eligibility filters (same as main analysis)
-        df_teacher_eligible = df_teacher[
-            (df_teacher['Days Wrkd in School Year'].astype(str) != '0') &
-            (df_teacher['Days Wrkd in School Year'].astype(str) != 'nan') &
-            (df_teacher['Days Wrkd in School Year'].notna()) &
-            (df_teacher['Status'] == 'OUT') &
-            (~df_teacher['Suspension Reason Code'].isin(['2SS', '2SR']))
-        ].copy()
+        # Get total counts by borough from ALL data
+        teacher_total_by_borough = df_teacher.groupby('Borough').size().to_dict()
+        print(f"Teacher totals by borough: {teacher_total_by_borough}")
         
-        # Filter for PRC/PRU (less than 44 days or more than 43 days)
-        df_teacher_prc_pru = df_teacher_eligible[
-            df_teacher_eligible['Renewal Classification'].isin(['Less than 44', 'More than 43'])
-        ].copy()
+        # Only filter by Status for borough analysis - much simpler
+        df_teacher_eligible = df_teacher[df_teacher['Status'].notna()].copy()
         
-        # Calculate completion status
-        df_teacher_prc_pru['Complete'] = (
-            (df_teacher_prc_pru['Reasonable Assurance'] == 'COMPLETE') &
-            (df_teacher_prc_pru['Autism Workshop'] == 'COMPLETE') &
-            (df_teacher_prc_pru['Child Abuse Workshop'] == 'COMPLETE') &
-            (df_teacher_prc_pru['Violence Prevention Workshop'] == 'COMPLETE') &
-            (df_teacher_prc_pru['DASA Workshop'] == 'COMPLETE') &
-            (df_teacher_prc_pru['SubHub Training'] == 'COMPLETE') &
-            (df_teacher_prc_pru['TEACH Profile'] == 'COMPLETE') &
-            (df_teacher_prc_pru['Bachelor Degree'] == 'COMPLETE')
-        )
+        print(f"Teacher records with status: {len(df_teacher_eligible)}")
+        
+        # Calculate completion status - just check if Status is 'COMP' vs 'OUT'
+        df_teacher_eligible['Complete'] = (df_teacher_eligible['Status'] == 'COMP')
         
         # Group by borough
-        teacher_borough_stats = df_teacher_prc_pru.groupby('Borough').agg({
+        teacher_borough_stats = df_teacher_eligible.groupby('Borough').agg({
             'Empl ID': 'count',
             'Complete': 'sum'
         }).reset_index()
@@ -1807,11 +1740,13 @@ def analyze_substitute_data_by_borough(df_para, df_teacher):
         teacher_borough_stats.columns = ['Borough', 'Total_Eligible', 'Total_Complete']
         teacher_borough_stats['Total_Outstanding'] = teacher_borough_stats['Total_Eligible'] - teacher_borough_stats['Total_Complete']
         
+        print(f"Teacher borough stats:\n{teacher_borough_stats}")
+        
         # Update borough data
         for _, row in teacher_borough_stats.iterrows():
             borough = row['Borough']
             if borough in borough_data:
-                borough_data[borough]['teacher_total'] = len(df_teacher[df_teacher['Borough'] == borough])
+                borough_data[borough]['teacher_total'] = teacher_total_by_borough.get(borough, 0)
                 borough_data[borough]['teacher_eligible'] = row['Total_Eligible']
                 borough_data[borough]['teacher_complete'] = row['Total_Complete']
                 borough_data[borough]['teacher_outstanding'] = row['Total_Outstanding']
@@ -1896,14 +1831,17 @@ def create_nyc_borough_map(borough_data, output_dir):
             cmin=0,
             cmax=100,
             colorbar=dict(
-                title="Para Completion Rate (%)",
-                titleside="right",
+                title=dict(
+                    text="Para Completion Rate (%)",
+                    side="right"
+                ),
                 tickmode="linear",
                 tick0=0,
-                dtick=20
+                dtick=20,
+                x=-0.1,  # Position on the left side
+                y=0.5
             ),
-            sizemode='diameter',
-            line=dict(width=2, color='darkblue')
+            sizemode='diameter'
         ),
         text=borough_names,
         hovertext=hover_texts,
@@ -1923,15 +1861,17 @@ def create_nyc_borough_map(borough_data, output_dir):
             cmin=0,
             cmax=100,
             colorbar=dict(
-                title="Teacher Completion Rate (%)",
-                titleside="right",
+                title=dict(
+                    text="Teacher Completion Rate (%)",
+                    side="right"
+                ),
                 tickmode="linear",
                 tick0=0,
                 dtick=20,
-                x=1.1  # Position to the right
+                x=1.02,  # Position on the right side
+                y=0.5
             ),
             sizemode='diameter',
-            line=dict(width=2, color='darkgreen'),
             opacity=0.7
         ),
         text=borough_names,
@@ -1978,9 +1918,9 @@ def create_nyc_borough_map(borough_data, output_dir):
         ]
     )
     
-    # Save as HTML
+    # Save as HTML using plotly.offline to match other charts
     output_file = os.path.join(output_dir, 'nyc_borough_map.html')
-    fig.write_html(output_file)
+    pyo.plot(fig, filename=output_file, auto_open=False)
     
     return output_file
 
@@ -2035,6 +1975,23 @@ def main():
         if os.path.exists(para_csv_path):
             print("\nAnalyzing Current Substitute Paraprofessional Data...")
             df_para = load_csv_data(para_csv_path, "para (current)")
+            # Ensure Postal column is string type before mapping
+            df_para['Postal'] = df_para['Postal'].astype(str)
+            
+            # Debug ZIP code analysis
+            print(f"DEBUG: Sample ZIP codes from para data:")
+            print(f"  First 10 ZIP codes: {df_para['Postal'].head(10).tolist()}")
+            print(f"  ZIP code value counts (top 10): {df_para['Postal'].value_counts().head(10).to_dict()}")
+            print(f"  Unique ZIP codes: {len(df_para['Postal'].unique())}")
+            
+            # Add Borough column based on ZIP code mapping
+            df_para['Borough'] = df_para['Postal'].apply(map_zip_to_borough)
+            
+            # Debug borough mapping
+            borough_counts = df_para['Borough'].value_counts()
+            print(f"  Borough distribution: {borough_counts.to_dict()}")
+            
+            print(f"✓ Added Borough mapping to {len(df_para)} paraprofessional records")
             para_results = analyze_substitute_paraprofessionals(df_para)
             print("✓ Current paraprofessional analysis completed")
         else:
@@ -2062,6 +2019,23 @@ def main():
         if os.path.exists(teacher_csv_path):
             print("\nAnalyzing Current Substitute Teacher Data...")
             df_teacher = load_csv_data(teacher_csv_path, "teacher (current)")
+            # Ensure Postal column is string type before mapping
+            df_teacher['Postal'] = df_teacher['Postal'].astype(str)
+            
+            # Debug ZIP code analysis
+            print(f"DEBUG: Sample ZIP codes from teacher data:")
+            print(f"  First 10 ZIP codes: {df_teacher['Postal'].head(10).tolist()}")
+            print(f"  ZIP code value counts (top 10): {df_teacher['Postal'].value_counts().head(10).to_dict()}")
+            print(f"  Unique ZIP codes: {len(df_teacher['Postal'].unique())}")
+            
+            # Add Borough column based on ZIP code mapping
+            df_teacher['Borough'] = df_teacher['Postal'].apply(map_zip_to_borough)
+            
+            # Debug borough mapping
+            borough_counts = df_teacher['Borough'].value_counts()
+            print(f"  Borough distribution: {borough_counts.to_dict()}")
+            
+            print(f"✓ Added Borough mapping to {len(df_teacher)} teacher records")
             teacher_results = analyze_substitute_teachers(df_teacher)
             print("✓ Current teacher analysis completed")
         else:

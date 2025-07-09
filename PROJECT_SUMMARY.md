@@ -2,9 +2,25 @@
 
 ## ✅ What We've Built
 
-A comprehensive, production-ready analytics dashboard for analyzing NYC Public Schools substitute teacher and paraprofessional renewal data with advanced stacked bar visualizations, accurate data processing, and professional NYC DOE branding.
+A comprehensive, production-ready analytics dashboard for analyzing NYC Public Schools substitute teacher and paraprofessional renewal data with advanced stacked bar visualizations, interactive geographic mapping, accurate data processing, and professional NYC DOE branding.
 
-## 🆕 Latest Major Enhancements (v1.4.1)
+## 🆕 Latest Major Enhancements (v1.5.0)
+
+### Interactive Geographic Borough Map
+- **NYC Borough Visualization**: Interactive Plotly map showing all five NYC boroughs
+- **Accurate ZIP Code Mapping**: Enhanced ZIP code processing handles all formats (ZIP+4, decimals)
+- **Dual Data Visualization**: Separate color coding and sizing for teachers and paraprofessionals
+- **Professional Legends**: Positioned colorbars on opposite sides to prevent overlap
+- **Standalone HTML Output**: Generated as `nyc_borough_map.html` for local viewing and embedding
+- **Seamless Integration**: Embedded in main dashboard via iframe for comprehensive analytics
+
+### Enhanced Data Accuracy
+- **Robust ZIP Code Handling**: All postal codes converted to strings and standardized
+- **Borough Assignment**: Accurate mapping of ZIP codes to NYC boroughs with debugging verification
+- **Filtering Consistency**: Simplified eligibility logic using Status field only (COMP vs OUT)
+- **Realistic Distributions**: All five boroughs now show appropriate completion data
+
+## 🆕 Major Enhancements (v1.4.1)
 
 ### Chart Sizing Optimization
 - **Perfect HTML Integration**: Reduced stacked bar chart width from 1500px to 900px
@@ -48,10 +64,11 @@ A comprehensive, production-ready analytics dashboard for analyzing NYC Public S
 - **`static/css/styles.css`** - Enhanced CSS for responsive design
 
 ### Generated Reports (Examples)
-- **`renewal_analytics_report.html`** - Main interactive dashboard
+- **`renewal_analytics_report.html`** - Main interactive dashboard with embedded geographic map
 - **`paraprofessional_overview.html`** - SPA-specific visualizations
 - **`teacher_overview.html`** - STE-specific visualizations
 - **`combined_comparison.html`** - Comparative analysis charts
+- **`nyc_borough_map.html`** - Interactive NYC borough-level geographic visualization
 
 ### Export Capabilities
 - **CSV Files** - Data exports for analysis
@@ -81,11 +98,13 @@ A comprehensive, production-ready analytics dashboard for analyzing NYC Public S
 ✅ **Interactive Charts**
 - Bar charts for overview metrics
 - Pie charts for completion rates
+- Geographic borough map with ZIP code analysis
 - Responsive design for all devices
-- Plotly-powered interactivity
+- Plotly-powered interactivity with offline HTML generation
 
 ✅ **Professional Dashboard**
 - Executive summary with KPIs
+- Geographic insights by NYC borough
 - Detailed breakdowns by category
 - Mobile-optimized layout
 - Print-friendly formatting

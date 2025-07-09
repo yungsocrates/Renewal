@@ -4,6 +4,12 @@ A comprehensive analytics tool for analyzing substitute teacher and paraprofessi
 
 ## 🚀 Features
 
+- **Geographic Borough Map**: Interactive NYC borough-level visualization with accurate ZIP code mapping
+  - Plotly-powered map showing all five NYC boroughs (Manhattan, Brooklyn, Queens, Bronx, Staten Island)
+  - Color-coded by completion rates with size indicating total eligible counts
+  - Dual legends for both teachers and paraprofessionals positioned to avoid overlap
+  - Standalone HTML file generation for local viewing and report embedding
+  - Accurate ZIP code handling including ZIP+4 formats and decimal conversion
 - **Advanced Stacked Bar Visualization**: Revolutionary side-by-side comparison of SPA vs STE renewal status
   - Single chart showing both substitute groups with detailed status breakdowns
   - Percentage labels within each bar segment for immediate insights
@@ -13,6 +19,7 @@ A comprehensive analytics tool for analyzing substitute teacher and paraprofessi
   - Excludes null, empty, and meaningless Status values for accurate counts
   - Debug verification ensures reported totals match filtered datasets
   - Real-time count validation and filtering transparency
+  - Enhanced ZIP code mapping with string conversion and format standardization
 - **Comprehensive Data Analysis**: Analyzes substitute teacher and paraprofessional renewal data
 - **Comparison Analytics**: Compare current data with historical data to track changes over time
 - **Enhanced Visualizations**: Plotly-powered charts with optimized sizing and readability
@@ -99,6 +106,24 @@ df_para = pd.read_csv('substitute_paraprofessionals.csv')
 para_results = analyze_substitute_paraprofessionals(df_para)
 ```
 
+### Viewing Reports Locally
+After running the analysis, open the generated HTML reports in your browser:
+
+**Option 1: Direct File Opening**
+- Navigate to the `renewal_reports` folder
+- Double-click `renewal_analytics_report.html` to open in your default browser
+
+**Option 2: Local Web Server (Recommended for embedded charts)**
+For proper viewing of all embedded charts including the geographic map:
+```bash
+# Navigate to the reports directory
+cd renewal_reports
+
+# Start a local web server
+python -m http.server 8000
+```
+Then visit `http://localhost:8000/renewal_analytics_report.html` in your browser.
+
 ## 🔄 Comparison Analytics
 
 The tool supports historical data comparison to track changes over time:
@@ -140,11 +165,12 @@ nycdoe-substitute-renewal-analytics/
 │   ├── js/                         # JavaScript files
 │   └── images/                     # Images and logos
 └── renewal_reports/                 # Generated reports (auto-created)
-    ├── renewal_analytics_report.html
-    ├── paraprofessional_overview.html
-    ├── teacher_overview.html
-    ├── combined_comparison.html
-    └── exports/                     # Exported files
+    ├── renewal_analytics_report.html    # Main dashboard
+    ├── paraprofessional_overview.html   # SPA visualizations
+    ├── teacher_overview.html           # STE visualizations
+    ├── combined_comparison.html        # Comparative analysis
+    ├── nyc_borough_map.html           # Geographic borough map
+    └── exports/                       # Exported files
         ├── *.pdf
         ├── *.xlsx
         └── *.csv
@@ -172,6 +198,7 @@ Required columns:
 - `Status`: Completion status ('Out', 'COMPL')
 - `Reasonable Assurance`: RA status
 - `Days Wrkd in School Year`: Number of days worked
+- `Address or School Zip`: ZIP code for geographic mapping
 - Various workshop and requirement columns
 
 #### Substitute Teachers CSV
@@ -180,6 +207,7 @@ Required columns:
 - `Certified`: Certification status ('Y', 'N')
 - `Renewal Classification`: Category classification
 - `Reasonable Assurance`: RA status
+- `Address or School Zip`: ZIP code for geographic mapping
 - Various requirement columns
 
 ## 📊 Export Formats
@@ -209,7 +237,8 @@ COMPLETION_THRESHOLD = 0.8  # 80% of requirements must be complete
 - **Completion Rates**: Overall renewal completion percentages
 - **Requirement Analysis**: Breakdown by specific requirements
 - **Time-based Trends**: Historical completion patterns
-- **Geographic Distribution**: Analysis by location/district
+- **Geographic Distribution**: Borough-level completion analysis with ZIP code mapping
+- **Borough Insights**: NYC borough comparison with completion rates and eligible counts
 
 ### Business Rules
 - **Days Worked Only**: ≤19 days worked, other requirements complete

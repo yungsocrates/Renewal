@@ -55,8 +55,9 @@ nyc-public-schools-substitute-renewal-analytics/
 │   └── css/
 │       └── styles.css               # Additional CSS styles
 └── renewal_reports/                 # Generated reports (auto-created)
-    ├── renewal_analytics_report.html # Main dashboard
-    ├── *.html                       # Chart files
+    ├── renewal_analytics_report.html # Main dashboard with embedded map
+    ├── nyc_borough_map.html         # Interactive borough map
+    ├── *.html                       # Additional chart files
     └── exports/                     # Exported data files
         ├── *.pdf                    # PDF reports
         ├── *.xlsx                   # Excel files
@@ -127,8 +128,35 @@ The dashboard includes multiple export formats:
 To update with new data:
 1. Replace CSV files locally
 2. Run the script: `python substitute_renewal_analytics.py`
-3. Commit and push changes
-4. Netlify automatically rebuilds with new data
+3. View reports locally (see Local Development below)
+4. Commit and push changes
+5. Netlify automatically rebuilds with new data
+
+### Local Development and Testing
+For local development and testing of the dashboard:
+
+**Option 1: Direct File Opening**
+- Navigate to the `renewal_reports` folder
+- Double-click `renewal_analytics_report.html`
+
+**Option 2: Local Web Server (Recommended)**
+For proper viewing of embedded geographic maps and all interactive features:
+```bash
+# Navigate to the reports directory
+cd renewal_reports
+
+# Start a simple HTTP server (Python 3)
+python -m http.server 8000
+
+# Or with Python 2
+python -m SimpleHTTPServer 8000
+```
+Then visit `http://localhost:8000/renewal_analytics_report.html` in your browser.
+
+**Why use a local server?**
+- Ensures proper loading of embedded iframe content (geographic map)
+- Avoids CORS issues with local file access
+- Provides the same viewing experience as the deployed version
 
 ## 🔍 Monitoring and Maintenance
 
@@ -198,9 +226,10 @@ pip freeze > requirements.txt
    - Webhook notifications
 
 5. **Advanced Visualizations**
-   - Geographic mapping
-   - Interactive filtering
+   - Enhanced geographic mapping with ZIP code analysis
+   - Interactive borough-level filtering
    - Custom date ranges
+   - Drill-down capabilities by district
 
 ### Contributing
 1. Fork the repository

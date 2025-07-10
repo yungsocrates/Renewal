@@ -47,8 +47,7 @@ from geographic_analysis import (
 from visualizations import (
     create_visualization_charts,
     create_nyc_borough_map,
-    create_para_zipcode_heatmap,
-    create_teacher_zipcode_heatmap,
+    create_dual_zipcode_heatmap,
     create_zipcode_choropleth_map_dual
 )
 warnings.filterwarnings('ignore')
@@ -1167,23 +1166,6 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
                 <iframe src="nyc_zipcode_choropleth.html" width="1250" height="850" frameborder="0"></iframe>
             </div>
             
-            <!-- Existing ZIP code heatmaps below -->
-            <div class="chart-container">
-                <h3>ZIP Code Heatmap - Substitute Paraprofessionals</h3>
-                <p style="color: #666; text-align: center; margin-bottom: 20px;">
-                    Heat density map showing paraprofessional distribution across ZIP codes (purple = lower density, yellow = higher density)
-                </p>
-                <iframe src="para_zipcode_heatmap.html" width="1250" height="850" frameborder="0"></iframe>
-            </div>
-            
-            <div class="chart-container">
-                <h3>ZIP Code Heatmap - Substitute Teachers</h3>
-                <p style="color: #666; text-align: center; margin-bottom: 20px;">
-                    Heat density map showing teacher distribution across ZIP codes (purple = lower density, yellow = higher density)
-                </p>
-                <iframe src="teacher_zipcode_heatmap.html" width="1250" height="850" frameborder="0"></iframe>
-            </div>
-            
             <div class="chart-container">
                 <h3>Renewal Status Breakdown by Group</h3>
                 <p style="color: #666; text-align: center; margin-bottom: 20px;">
@@ -1952,7 +1934,7 @@ def create_nyc_borough_map(borough_data, output_dir):
             font=dict(size=24, color='#2c3e50', family='Arial Black')
         ),
         mapbox=dict(
-            style='open-street-map',
+            style='carto-positron',
             center=dict(lat=40.7589, lon=-73.7004),  # Centered between NYC and surrounding areas
             zoom=8.5  # Zoomed out to show neighboring counties
         ),
@@ -1988,177 +1970,6 @@ def create_nyc_borough_map(borough_data, output_dir):
     
     return output_file
 
-def create_para_zipcode_heatmap(df_para, output_dir):
-    """
-    Create ZIP code heatmap showing paraprofessional distribution density
-    
-    Args:
-        df_para (pd.DataFrame): Paraprofessional data with ZIP codes
-        output_dir (str): Output directory for HTML file
-        
-    Returns:
-        str: Path to generated HTML file
-    """
-    # Process paraprofessional data
-    zip_counts = {}
-    if df_para is not None and not df_para.empty:
-        para_zip_counts = df_para['Postal'].value_counts()
-        for zip_code, count in para_zip_counts.items():
-            # Clean ZIP code - remove .0 from floats and convert to string
-            clean_zip = str(zip_code).replace('.0', '').strip()
-            if clean_zip not in ['Unknown', 'nan', 'None', '']:
-                zip_counts[clean_zip] = count
-    
-    # Get actual ZIP code coordinates
-    lats = []
-    lons = []
-    counts = []
-    zip_codes = []
-    
-    for zip_code, count in zip_counts.items():
-        coords = get_zip_coordinates(zip_code)
-        if coords:
-            lats.append(coords['lat'])
-            lons.append(coords['lon'])
-            counts.append(count)
-            zip_codes.append(zip_code)
-    
-    # Create heatmap
-    fig = go.Figure()
-    
-    if lats and lons and counts:
-        max_count = max(counts) if counts else 1
-        
-        # Create hover text for each point
-        hover_texts = [f"ZIP Code: {zip_code}<br>Paraprofessionals: {count}" 
-                       for zip_code, count in zip(zip_codes, counts)]
-        
-        fig.add_trace(go.Densitymapbox(
-            lat=lats,
-            lon=lons,
-            z=counts,
-            radius=15,
-            colorscale='Viridis',
-            zmin=0,
-            zmax=max_count,
-            showscale=True,
-            hovertemplate='%{text}<extra></extra>',
-            text=hover_texts,
-            colorbar=dict(
-                title=f"Number of Paraprofessionals<br>(Max: {max_count})",
-                x=1.02
-            )
-        ))
-    
-    # Update layout with visible background map
-    fig.update_layout(
-        title=dict(
-            text="NYC Substitute Paraprofessionals - ZIP Code Distribution",
-            x=0.5,
-            font=dict(size=20, color='#2c3e50')
-        ),
-        mapbox=dict(
-            style='carto-positron',  # Clean black and white map
-            center=dict(lat=40.7128, lon=-73.9060),
-            zoom=10
-        ),
-        height=800,
-        width=1200,
-        margin=dict(l=0, r=0, t=60, b=0)
-    )
-    
-    # Save as HTML
-    output_file = os.path.join(output_dir, 'para_zipcode_heatmap.html')
-    pyo.plot(fig, filename=output_file, auto_open=False)
-    
-    return output_file
-
-def create_teacher_zipcode_heatmap(df_teacher, output_dir):
-    """
-    Create ZIP code heatmap showing teacher distribution density
-    
-    Args:
-        df_teacher (pd.DataFrame): Teacher data with ZIP codes
-        output_dir (str): Output directory for HTML file
-        
-    Returns:
-        str: Path to generated HTML file
-    """
-    # Process teacher data
-    zip_counts = {}
-    if df_teacher is not None and not df_teacher.empty:
-        teacher_zip_counts = df_teacher['Postal'].value_counts()
-        for zip_code, count in teacher_zip_counts.items():
-            # Clean ZIP code - remove .0 from floats and convert to string
-            clean_zip = str(zip_code).replace('.0', '').strip()
-            if clean_zip not in ['Unknown', 'nan', 'None', '']:
-                zip_counts[clean_zip] = count
-    
-    # Get actual ZIP code coordinates
-    lats = []
-    lons = []
-    counts = []
-    zip_codes = []
-    
-    for zip_code, count in zip_counts.items():
-        coords = get_zip_coordinates(zip_code)
-        if coords:
-            lats.append(coords['lat'])
-            lons.append(coords['lon'])
-            counts.append(count)
-            zip_codes.append(zip_code)
-    
-    # Create heatmap
-    fig = go.Figure()
-    
-    if lats and lons and counts:
-        max_count = max(counts) if counts else 1
-        
-        # Create hover text for each point
-        hover_texts = [f"ZIP Code: {zip_code}<br>Teachers: {count}" 
-                       for zip_code, count in zip(zip_codes, counts)]
-        
-        fig.add_trace(go.Densitymapbox(
-            lat=lats,
-            lon=lons,
-            z=counts,
-            radius=15,
-            colorscale='Plasma',
-            zmin=0,
-            zmax=max_count,
-            showscale=True,
-            hovertemplate='%{text}<extra></extra>',
-            text=hover_texts,
-            colorbar=dict(
-                title=f"Number of Teachers<br>(Max: {max_count})",
-                x=1.02
-            )
-        ))
-    
-    # Update layout with visible background map
-    fig.update_layout(
-        title=dict(
-            text="NYC Substitute Teachers - ZIP Code Distribution",
-            x=0.5,
-            font=dict(size=20, color='#2c3e50')
-        ),
-        mapbox=dict(
-            style='carto-positron',  # Clean black and white map
-            center=dict(lat=40.7128, lon=-73.9060),
-            zoom=10
-        ),
-        height=800,
-        width=1200,
-        margin=dict(l=0, r=0, t=60, b=0)
-    )
-    
-    # Save as HTML
-    output_file = os.path.join(output_dir, 'teacher_zipcode_heatmap.html')
-    pyo.plot(fig, filename=output_file, auto_open=False)
-    
-    return output_file
-
-# === ZIP CODE CHOROPLETH MAP GENERATION ===
 def generate_zipcode_choropleth():
     import pandas as pd
     # Load boundary data
@@ -2210,6 +2021,15 @@ def generate_zipcode_choropleth():
         boundary_zip_col='MODZCTA'
     )
     print(f"Choropleth map saved to: {output_file}")
+
+    # Generate ZIP code density heatmap (dual)
+    output_heatmap_file = os.path.join(OUTPUT_DIR, 'nyc_zipcode_density_heatmap.html')
+    create_dual_zipcode_heatmap(
+        df_para,
+        df_teacher,
+        output_heatmap_file
+    )
+    print(f"Density heatmap saved to: {output_heatmap_file}")
 
 def main():
     """
@@ -2370,25 +2190,6 @@ def main():
             print(f"⚠ Borough map generation failed: {str(e)}")
             borough_map_file = None
         
-        # Generate ZIP code heatmaps
-        print("\nGenerating ZIP Code Heatmaps...")
-        try:
-            para_heatmap_file = create_para_zipcode_heatmap(df_para, OUTPUT_DIR)
-            print(f"✓ Paraprofessional heatmap generated: {para_heatmap_file}")
-        except Exception as e:
-            print(f"⚠ Para heatmap generation failed: {str(e)}")
-            para_heatmap_file = None
-            
-        try:
-            teacher_heatmap_file = create_teacher_zipcode_heatmap(df_teacher, OUTPUT_DIR)
-            print(f"✓ Teacher heatmap generated: {teacher_heatmap_file}")
-        except Exception as e:
-            print(f"⚠ Teacher heatmap generation failed: {str(e)}")
-            teacher_heatmap_file = None
-        except Exception as e:
-            print(f"⚠ Teacher heatmap generation failed: {str(e)}")
-            teacher_heatmap_file = None
-        
         # Generate ZIP code choropleth map
         print("\nGenerating ZIP Code Choropleth Map...")
         try:
@@ -2455,10 +2256,6 @@ def main():
         print(f"  • Charts: {', '.join([os.path.basename(f) for f in chart_files])}")
         if borough_map_file:
             print(f"  • Borough Map: {borough_map_file}")
-        if para_heatmap_file:
-            print(f"  • Para ZIP Code Heatmap: {para_heatmap_file}")
-        if teacher_heatmap_file:
-            print(f"  • Teacher ZIP Code Heatmap: {teacher_heatmap_file}")
         
         # Print borough summary
         print(f"\n🗺️  Geographic Distribution Summary:")

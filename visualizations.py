@@ -9,51 +9,115 @@ import pandas as pd
 import os
 from geographic_analysis import map_zip_to_borough
 
+# Accurate ZIP code coordinates for NYC and nearby areas (add more as needed)
+zip_coords = {
+        # Manhattan ZIP codes
+        '10001': {'lat': 40.7505, 'lon': -73.9934}, '10002': {'lat': 40.7157, 'lon': -73.9860},
+        '10003': {'lat': 40.7322, 'lon': -73.9867}, '10004': {'lat': 40.7047, 'lon': -74.0142},
+        '10005': {'lat': 40.7069, 'lon': -74.0113}, '10006': {'lat': 40.7096, 'lon': -74.0130},
+        '10007': {'lat': 40.7133, 'lon': -74.0070}, '10009': {'lat': 40.7268, 'lon': -73.9779},
+        '10010': {'lat': 40.7397, 'lon': -73.9773}, '10011': {'lat': 40.7405, 'lon': -74.0014},
+        '10012': {'lat': 40.7253, 'lon': -74.0034}, '10013': {'lat': 40.7200, 'lon': -74.0026},
+        '10014': {'lat': 40.7342, 'lon': -74.0064}, '10016': {'lat': 40.7464, 'lon': -73.9756},
+        '10017': {'lat': 40.7520, 'lon': -73.9717}, '10018': {'lat': 40.7549, 'lon': -73.9930},
+        '10019': {'lat': 40.7658, 'lon': -73.9873}, '10020': {'lat': 40.7584, 'lon': -73.9738},
+        '10021': {'lat': 40.7697, 'lon': -73.9598}, '10022': {'lat': 40.7575, 'lon': -73.9709},
+        '10023': {'lat': 40.7765, 'lon': -73.9814}, '10024': {'lat': 40.7875, 'lon': -73.9745},
+        '10025': {'lat': 40.7982, 'lon': -73.9671}, '10026': {'lat': 40.8017, 'lon': -73.9527},
+        '10027': {'lat': 40.8115, 'lon': -73.9530}, '10028': {'lat': 40.7763, 'lon': -73.9532},
+        '10029': {'lat': 40.7919, 'lon': -73.9441}, '10030': {'lat': 40.8182, 'lon': -73.9444},
+        '10031': {'lat': 40.8251, 'lon': -73.9495}, '10032': {'lat': 40.8387, 'lon': -73.9417},
+        '10033': {'lat': 40.8502, 'lon': -73.9342}, '10034': {'lat': 40.8677, 'lon': -73.9212},
+        '10035': {'lat': 40.7957, 'lon': -73.9389}, '10036': {'lat': 40.7590, 'lon': -73.9845},
+        '10037': {'lat': 40.8142, 'lon': -73.9370}, '10038': {'lat': 40.7086, 'lon': -74.0020},
+        '10039': {'lat': 40.8267, 'lon': -73.9363}, '10040': {'lat': 40.8588, 'lon': -73.9302},
+        
+        # Brooklyn ZIP codes (sample - major ones)
+        '11201': {'lat': 40.6945, 'lon': -73.9901}, '11203': {'lat': 40.6514, 'lon': -73.9342},
+        '11204': {'lat': 40.6189, 'lon': -73.9842}, '11205': {'lat': 40.6945, 'lon': -73.9665},
+        '11206': {'lat': 40.7022, 'lon': -73.9421}, '11207': {'lat': 40.6720, 'lon': -73.8946},
+        '11208': {'lat': 40.6591, 'lon': -73.8736}, '11209': {'lat': 40.6226, 'lon': -74.0305},
+        '11210': {'lat': 40.6282, 'lon': -73.9473}, '11211': {'lat': 40.7115, 'lon': -73.9535},
+        '11212': {'lat': 40.6627, 'lon': -73.9063}, '11213': {'lat': 40.6711, 'lon': -73.9363},
+        '11214': {'lat': 40.5993, 'lon': -73.9942}, '11215': {'lat': 40.6628, 'lon': -73.9865},
+        '11216': {'lat': 40.6808, 'lon': -73.9419}, '11217': {'lat': 40.6806, 'lon': -73.9779},
+        '11218': {'lat': 40.6434, 'lon': -73.9773}, '11219': {'lat': 40.6323, 'lon': -73.9963},
+        '11220': {'lat': 40.6412, 'lon': -74.0170}, '11221': {'lat': 40.6911, 'lon': -73.9275},
+        '11222': {'lat': 40.7284, 'lon': -73.9474}, '11223': {'lat': 40.5969, 'lon': -73.9732},
+        '11224': {'lat': 40.5775, 'lon': -73.9874}, '11225': {'lat': 40.6622, 'lon': -73.9541},
+        '11226': {'lat': 40.6465, 'lon': -73.9563}, '11228': {'lat': 40.6166, 'lon': -74.0120},
+        '11229': {'lat': 40.6008, 'lon': -73.9442}, '11230': {'lat': 40.6226, 'lon': -73.9652},
+        '11231': {'lat': 40.6782, 'lon': -74.0067}, '11232': {'lat': 40.6569, 'lon': -74.0090},
+        '11233': {'lat': 40.6783, 'lon': -73.9196}, '11234': {'lat': 40.5992, 'lon': -73.9192},
+        '11235': {'lat': 40.5847, 'lon': -73.9484}, '11236': {'lat': 40.6396, 'lon': -73.9014},
+        '11237': {'lat': 40.7040, 'lon': -73.8811}, '11238': {'lat': 40.6795, 'lon': -73.9646},
+        '11239': {'lat': 40.6471, 'lon': -73.8705}, '11249': {'lat': 40.7208, 'lon': -73.9425},
+        '11251': {'lat': 40.6901, 'lon': -73.9901}, '11252': {'lat': 40.6901, 'lon': -73.9901},
+        
+        # Queens ZIP codes (sample - major ones)
+        '11004': {'lat': 40.7450, 'lon': -73.7713}, '11005': {'lat': 40.7480, 'lon': -73.7713},
+        '11101': {'lat': 40.7359, 'lon': -73.9392}, '11102': {'lat': 40.7734, 'lon': -73.9196},
+        '11103': {'lat': 40.7634, 'lon': -73.9118}, '11104': {'lat': 40.7443, 'lon': -73.9196},
+        '11105': {'lat': 40.7789, 'lon': -73.9067}, '11106': {'lat': 40.7628, 'lon': -73.9302},
+        '11354': {'lat': 40.7687, 'lon': -73.8370}, '11355': {'lat': 40.7498, 'lon': -73.8201},
+        '11356': {'lat': 40.7848, 'lon': -73.8468}, '11357': {'lat': 40.7858, 'lon': -73.8269},
+        '11358': {'lat': 40.7608, 'lon': -73.7958}, '11360': {'lat': 40.7828, 'lon': -73.7784},
+        '11361': {'lat': 40.7638, 'lon': -73.7738}, '11362': {'lat': 40.7578, 'lon': -73.7678},
+        '11363': {'lat': 40.7718, 'lon': -73.7535}, '11364': {'lat': 40.7448, 'lon': -73.7735},
+        '11365': {'lat': 40.7407, 'lon': -73.7949}, '11366': {'lat': 40.7288, 'lon': -73.7949},
+        '11367': {'lat': 40.7318, 'lon': -73.8249}, '11368': {'lat': 40.7508, 'lon': -73.8549},
+        '11369': {'lat': 40.7628, 'lon': -73.8649}, '11370': {'lat': 40.7648, 'lon': -73.8949},
+        '11372': {'lat': 40.7548, 'lon': -73.8749}, '11373': {'lat': 40.7408, 'lon': -73.8749},
+        '11374': {'lat': 40.7288, 'lon': -73.8549}, '11375': {'lat': 40.7198, 'lon': -73.8349},
+        '11377': {'lat': 40.7437, 'lon': -73.9049}, '11378': {'lat': 40.7167, 'lon': -73.8949},
+        '11379': {'lat': 40.7217, 'lon': -73.8749}, '11385': {'lat': 40.7017, 'lon': -73.8749},
+        '11411': {'lat': 40.6917, 'lon': -73.7449}, '11412': {'lat': 40.6997, 'lon': -73.7649},
+        '11413': {'lat': 40.6717, 'lon': -73.7649}, '11414': {'lat': 40.6577, 'lon': -73.8449},
+        '11415': {'lat': 40.7067, 'lon': -73.8249}, '11416': {'lat': 40.6837, 'lon': -73.8449},
+        '11417': {'lat': 40.6777, 'lon': -73.8349}, '11418': {'lat': 40.6977, 'lon': -73.8349},
+        '11419': {'lat': 40.6917, 'lon': -73.8149}, '11420': {'lat': 40.6677, 'lon': -73.7649},
+        '11421': {'lat': 40.6937, 'lon': -73.8649}, '11422': {'lat': 40.6597, 'lon': -73.7349},
+        '11423': {'lat': 40.7097, 'lon': -73.7649}, '11426': {'lat': 40.7377, 'lon': -73.7049},
+        '11427': {'lat': 40.7297, 'lon': -73.7249}, '11428': {'lat': 40.7177, 'lon': -73.7449},
+        '11429': {'lat': 40.7087, 'lon': -73.7349}, '11432': {'lat': 40.7147, 'lon': -73.7949},
+        '11433': {'lat': 40.6987, 'lon': -73.7949}, '11434': {'lat': 40.6747, 'lon': -73.7749},
+        '11435': {'lat': 40.7007, 'lon': -73.8049}, '11436': {'lat': 40.6857, 'lon': -73.7749},
+        
+        # Bronx ZIP codes (sample - major ones)
+        '10451': {'lat': 40.8204, 'lon': -73.9252}, '10452': {'lat': 40.8407, 'lon': -73.9240},
+        '10453': {'lat': 40.8518, 'lon': -73.9123}, '10454': {'lat': 40.8088, 'lon': -73.9187},
+        '10455': {'lat': 40.8142, 'lon': -73.9089}, '10456': {'lat': 40.8278, 'lon': -73.9098},
+        '10457': {'lat': 40.8476, 'lon': -73.9009}, '10458': {'lat': 40.8618, 'lon': -73.8883},
+        '10459': {'lat': 40.8238, 'lon': -73.8942}, '10460': {'lat': 40.8418, 'lon': -73.8783},
+        '10461': {'lat': 40.8478, 'lon': -73.8353}, '10462': {'lat': 40.8418, 'lon': -73.8604},
+        '10463': {'lat': 40.8795, 'lon': -73.9073}, '10464': {'lat': 40.8445, 'lon': -73.7854},
+        '10465': {'lat': 40.8265, 'lon': -73.8254}, '10466': {'lat': 40.8895, 'lon': -73.8504},
+        '10467': {'lat': 40.8735, 'lon': -73.8783}, '10468': {'lat': 40.8678, 'lon': -73.9004},
+        '10469': {'lat': 40.8678, 'lon': -73.8504}, '10470': {'lat': 40.8895, 'lon': -73.8354},
+        '10471': {'lat': 40.9045, 'lon': -73.8984}, '10472': {'lat': 40.8298, 'lon': -73.8704},
+        '10473': {'lat': 40.8198, 'lon': -73.8504}, '10474': {'lat': 40.8098, 'lon': -73.8904},
+        '10475': {'lat': 40.8795, 'lon': -73.8254},
+        
+        # Staten Island ZIP codes
+        '10301': {'lat': 40.6348, 'lon': -74.0776}, '10302': {'lat': 40.6278, 'lon': -74.0987},
+        '10303': {'lat': 40.6348, 'lon': -74.0987}, '10304': {'lat': 40.6098, 'lon': -74.0865},
+        '10305': {'lat': 40.5898, 'lon': -74.0754}, '10306': {'lat': 40.5698, 'lon': -74.1243},
+        '10307': {'lat': 40.5098, 'lon': -74.2443}, '10308': {'lat': 40.5548, 'lon': -74.1654},
+        '10309': {'lat': 40.5298, 'lon': -74.2054}, '10310': {'lat': 40.6298, 'lon': -74.1154},
+        '10311': {'lat': 40.6098, 'lon': -74.1654}, '10312': {'lat': 40.5548, 'lon': -74.1954},
+        '10313': {'lat': 40.5798, 'lon': -74.2054}, '10314': {'lat': 40.5998, 'lon': -74.1654}
+    }
+
 def get_zip_coordinates(zip_code):
     """
-    Get approximate coordinates for a ZIP code using borough centroids
-    
+    Get latitude and longitude coordinates for a given ZIP code
     Args:
-        zip_code (str): ZIP code
-        
+        zip_code (str): ZIP code to get coordinates for
     Returns:
-        dict: Coordinates with 'lat' and 'lon' keys, or None if not found
+        dict: Dictionary with 'lat' and 'lon' keys, or None if not found
     """
-    import random
-    
-    # Use borough mapping to get approximate coordinates
-    from_borough = map_zip_to_borough(zip_code)
-    if from_borough != 'Unknown':
-        # Borough centroids
-        borough_coords = {
-            'Manhattan': {'lat': 40.7831, 'lon': -73.9712},
-            'Brooklyn': {'lat': 40.6782, 'lon': -73.9442},
-            'Queens': {'lat': 40.7282, 'lon': -73.7949},
-            'Bronx': {'lat': 40.8448, 'lon': -73.8648},
-            'Staten Island': {'lat': 40.5795, 'lon': -74.1502},
-            'Westchester County': {'lat': 41.1220, 'lon': -73.7949},
-            'Nassau County': {'lat': 40.6546, 'lon': -73.5594},
-            'Suffolk County': {'lat': 40.8176, 'lon': -72.6851},
-            'Bergen County, NJ': {'lat': 40.9264, 'lon': -74.0431},
-            'Hudson County, NJ': {'lat': 40.7282, 'lon': -74.0776},
-            'Union County, NJ': {'lat': 40.6218, 'lon': -74.3107},
-            'Essex County, NJ': {'lat': 40.7864, 'lon': -74.2191},
-            'Rockland County, NY': {'lat': 41.1489, 'lon': -73.9441},
-            'Fairfield County, CT': {'lat': 41.2033, 'lon': -73.2967}
-        }
-        
-        if from_borough in borough_coords:
-            # Add small random offset to spread points within borough
-            base_coords = borough_coords[from_borough]
-            lat_offset = random.uniform(-0.02, 0.02)
-            lon_offset = random.uniform(-0.02, 0.02)
-            
-            return {
-                'lat': base_coords['lat'] + lat_offset,
-                'lon': base_coords['lon'] + lon_offset
-            }
-    
-    return None
+    clean_zip = str(zip_code).split('.')[0].split('-')[0].strip()
+    return zip_coords.get(clean_zip)
 
 def create_nyc_borough_map(borough_data, output_dir):
     """
@@ -97,7 +161,7 @@ def create_nyc_borough_map(borough_data, output_dir):
     teacher_completion_rates = []
     hover_texts = []
     area_types = []  # To distinguish NYC vs neighboring areas
-    
+
     for area, coords in area_coords.items():
         if area in borough_data:
             data = borough_data[area]
@@ -244,159 +308,80 @@ def create_nyc_borough_map(borough_data, output_dir):
     
     return output_file
 
-def create_para_zipcode_heatmap(df_para, output_dir):
+def create_dual_zipcode_heatmap(df_para, df_teacher, output_file):
     """
-    Create ZIP code heatmap showing paraprofessional distribution density
-    
+    Create a dual ZIP code heatmap for substitute paraprofessionals and teachers with toggle buttons.
     Args:
         df_para (pd.DataFrame): Paraprofessional data with ZIP codes
-        output_dir (str): Output directory for HTML file
-        
-    Returns:
-        str: Path to generated HTML file
-    """
-    # Process paraprofessional data
-    zip_counts = {}
-    if df_para is not None and not df_para.empty:
-        para_zip_counts = df_para['Postal'].value_counts()
-        for zip_code, count in para_zip_counts.items():
-            if str(zip_code) not in ['Unknown', 'nan', 'None', '']:
-                zip_counts[str(zip_code)] = count
-    
-    # Get actual ZIP code coordinates
-    lats = []
-    lons = []
-    counts = []
-    zip_codes = []
-    hover_texts = []
-    
-    for zip_code, count in zip_counts.items():
-        coords = get_zip_coordinates(zip_code)
-        if coords:
-            lats.append(coords['lat'])
-            lons.append(coords['lon'])
-            counts.append(count)
-            zip_codes.append(zip_code)
-            
-            # Create hover text with ZIP code and count
-            hover_text = f"<b>ZIP Code: {zip_code}</b><br>Paraprofessionals: {count:,}"
-            hover_texts.append(hover_text)
-    
-    # Create heatmap
-    fig = go.Figure()
-    
-    if lats and lons and counts:
-        # Get the actual maximum for this dataset
-        max_count = max(counts) if counts else 100
-        
-        fig.add_trace(go.Densitymapbox(
-            lat=lats,
-            lon=lons,
-            z=counts,
-            radius=20,
-            colorscale='Viridis',
-            showscale=True,
-            zmin=0,
-            zmax=max_count,
-            colorbar=dict(
-                title=f"Number of Paraprofessionals<br>(Max: {max_count:,})",
-                x=1.02
-            ),
-            text=hover_texts,
-            hovertemplate='%{text}<extra></extra>'
-        ))
-    
-    # Update layout
-    fig.update_layout(
-        title=dict(
-            text="NYC Substitute Paraprofessionals - ZIP Code Distribution",
-            x=0.5,
-            font=dict(size=20, color='#2c3e50')
-        ),
-        mapbox=dict(
-            style='carto-positron',
-            center=dict(lat=40.7128, lon=-73.9060),
-            zoom=9
-        ),
-        height=800,
-        width=1200,
-        margin=dict(l=0, r=0, t=60, b=0)
-    )
-    
-    # Save as HTML
-    output_file = os.path.join(output_dir, 'para_zipcode_heatmap.html')
-    pyo.plot(fig, filename=output_file, auto_open=False)
-    
-    return output_file
-
-def create_teacher_zipcode_heatmap(df_teacher, output_dir):
-    """
-    Create ZIP code heatmap showing teacher distribution density
-    
-    Args:
         df_teacher (pd.DataFrame): Teacher data with ZIP codes
-        output_dir (str): Output directory for HTML file
-        
+        output_file (str): Path to save the HTML file
     Returns:
         str: Path to generated HTML file
     """
-    # Process teacher data
-    zip_counts = {}
-    if df_teacher is not None and not df_teacher.empty:
-        teacher_zip_counts = df_teacher['Postal'].value_counts()
-        for zip_code, count in teacher_zip_counts.items():
-            # Clean ZIP code - remove .0 from floats and convert to string
-            clean_zip = str(zip_code).replace('.0', '').strip()
-            if clean_zip not in ['Unknown', 'nan', 'None', '']:
-                zip_counts[clean_zip] = count
-    
-    # Get actual ZIP code coordinates
-    lats = []
-    lons = []
-    counts = []
-    zip_codes = []
-    hover_texts = []
-    
-    for zip_code, count in zip_counts.items():
+    import plotly.graph_objects as go
+    import plotly.offline as pyo
+
+    # --- Prepare para data ---
+    para_zip_counts = df_para['Postal'].value_counts()
+    para_lats, para_lons, para_counts, para_zip_codes, para_hover = [], [], [], [], []
+    for zip_code, count in para_zip_counts.items():
         coords = get_zip_coordinates(zip_code)
         if coords:
-            lats.append(coords['lat'])
-            lons.append(coords['lon'])
-            counts.append(count)
-            zip_codes.append(zip_code)
-            
-            # Create hover text with ZIP code and count
-            hover_text = f"<b>ZIP Code: {zip_code}</b><br>Teachers: {count:,}"
-            hover_texts.append(hover_text)
-    
-    # Create heatmap
-    fig = go.Figure()
-    
-    if lats and lons and counts:
-        # Get the actual maximum for this dataset
-        max_count = max(counts) if counts else 100
-        
-        fig.add_trace(go.Densitymapbox(
-            lat=lats,
-            lon=lons,
-            z=counts,
-            radius=20,
-            colorscale='Plasma',
-            showscale=True,
-            zmin=0,
-            zmax=max_count,
-            colorbar=dict(
-                title=f"Number of Teachers<br>(Max: {max_count:,})",
-                x=1.02
-            ),
-            text=hover_texts,
-            hovertemplate='%{text}<extra></extra>'
-        ))
-    
-    # Update layout
+            para_lats.append(coords['lat'])
+            para_lons.append(coords['lon'])
+            para_counts.append(count)
+            para_zip_codes.append(zip_code)
+            para_hover.append(f"<b>ZIP Code: {zip_code}</b><br>Paraprofessionals: {count:,}")
+
+    # --- Prepare teacher data ---
+    teacher_zip_counts = df_teacher['Postal'].value_counts()
+    teacher_lats, teacher_lons, teacher_counts, teacher_zip_codes, teacher_hover = [], [], [], [], []
+    for zip_code, count in teacher_zip_counts.items():
+        coords = get_zip_coordinates(zip_code)
+        if coords:
+            teacher_lats.append(coords['lat'])
+            teacher_lons.append(coords['lon'])
+            teacher_counts.append(count)
+            teacher_zip_codes.append(zip_code)
+            teacher_hover.append(f"<b>ZIP Code: {zip_code}</b><br>Teachers: {count:,}")
+
+    # --- Create traces ---
+    max_para = max(para_counts) if para_counts else 1
+    max_teacher = max(teacher_counts) if teacher_counts else 1
+    trace_para = go.Densitymapbox(
+        lat=para_lats,
+        lon=para_lons,
+        z=para_counts,
+        radius=20,
+        colorscale='Viridis',
+        showscale=True,
+        zmin=0,
+        zmax=max_para,
+        colorbar=dict(title=f"Number of Paraprofessionals<br>(Max: {max_para:,})", x=1.02),
+        text=para_hover,
+        hovertemplate='%{text}<extra></extra>',
+        visible=True,
+        name='Paraprofessionals'
+    )
+    trace_teacher = go.Densitymapbox(
+        lat=teacher_lats,
+        lon=teacher_lons,
+        z=teacher_counts,
+        radius=20,
+        colorscale='Plasma',
+        showscale=True,
+        zmin=0,
+        zmax=max_teacher,
+        colorbar=dict(title=f"Number of Teachers<br>(Max: {max_teacher:,})", x=1.02),
+        text=teacher_hover,
+        hovertemplate='%{text}<extra></extra>',
+        visible=False,
+        name='Teachers'
+    )
+    fig = go.Figure(data=[trace_para, trace_teacher])
     fig.update_layout(
         title=dict(
-            text="NYC Substitute Teachers - ZIP Code Distribution",
+            text="NYC Substitute Distribution by ZIP Code (Heatmap)",
             x=0.5,
             font=dict(size=20, color='#2c3e50')
         ),
@@ -407,13 +392,25 @@ def create_teacher_zipcode_heatmap(df_teacher, output_dir):
         ),
         height=800,
         width=1200,
-        margin=dict(l=0, r=0, t=60, b=0)
+        margin=dict(l=0, r=0, t=60, b=0),
+        updatemenus=[
+            dict(
+                buttons=[
+                    dict(args=[{"visible": [True, False]}], label="Paraprofessionals", method="update"),
+                    dict(args=[{"visible": [False, True]}], label="Teachers", method="update")
+                ],
+                direction="left",
+                pad={"r": 0, "t": 0},
+                showactive=True,
+                type="buttons",
+                x=1,
+                xanchor="right",
+                y=1.08,
+                yanchor="top"
+            ),
+        ]
     )
-    
-    # Save as HTML
-    output_file = os.path.join(output_dir, 'teacher_zipcode_heatmap.html')
     pyo.plot(fig, filename=output_file, auto_open=False)
-    
     return output_file
 
 def create_visualization_charts(para_results, teacher_results, output_dir):
@@ -807,9 +804,15 @@ def create_zipcode_heatmap_dual(df_para, df_teacher, output_dir):
         if df is not None and not df.empty:
             counts = df['Postal'].value_counts()
             for zip_code, count in counts.items():
-                clean_zip = str(zip_code).replace('.0', '').strip()
-                if clean_zip not in ['Unknown', 'nan', 'None', '']:
-                    zip_counts[clean_zip] = count
+                # Robustly convert ZIPs to 5-digit strings
+                if pd.isna(zip_code):
+                    continue
+                try:
+                    zip_str = str(int(float(zip_code))).zfill(5)
+                except Exception:
+                    zip_str = str(zip_code).split('.')[0].split('-')[0].strip().zfill(5)
+                if zip_str not in ['Unknown', 'nan', 'None', '']:
+                    zip_counts[zip_str] = count
         lats, lons, counts, zip_codes, hover_texts = [], [], [], [], []
         for zip_code, count in zip_counts.items():
             coords = get_zip_coordinates(zip_code)
@@ -820,6 +823,9 @@ def create_zipcode_heatmap_dual(df_para, df_teacher, output_dir):
                 zip_codes.append(zip_code)
                 hover_text = f"<b>ZIP Code: {zip_code}</b><br>{label}: {count:,}"
                 hover_texts.append(hover_text)
+            else:
+                # Optionally, print or log missing ZIPs for debugging
+                print(f"[WARN] No coordinates for ZIP: {zip_code}")
         return lats, lons, counts, zip_codes, hover_texts
 
     # Para data
@@ -897,3 +903,15 @@ def create_zipcode_heatmap_dual(df_para, df_teacher, output_dir):
     output_file = os.path.join(output_dir, 'nyc_zipcode_heatmap_dual.html')
     pyo.plot(fig, filename=output_file, auto_open=False)
     return output_file
+
+def create_para_zipcode_heatmap(df_para, output_dir):
+    """
+    Deprecated: Use create_dual_zipcode_heatmap instead.
+    """
+    raise NotImplementedError("Use create_dual_zipcode_heatmap for dual heatmap functionality.")
+
+def create_teacher_zipcode_heatmap(df_teacher, output_dir):
+    """
+    Deprecated: Use create_dual_zipcode_heatmap instead.
+    """
+    raise NotImplementedError("Use create_dual_zipcode_heatmap for dual heatmap functionality.")

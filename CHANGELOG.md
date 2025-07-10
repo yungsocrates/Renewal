@@ -5,6 +5,21 @@ All notable changes to the NYCDOE Substitute Renewal Analytics Dashboard will be
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2025-07-09
+
+### Added
+- **Dual ZIP Code Choropleth Map**: Interactive map with true NYC ZIP code boundaries for both substitute paraprofessionals and teachers
+  - Toggle buttons at top right to switch between para and teacher counts
+  - Title is left-aligned, buttons are top-right, and map is fully embedded in the HTML report
+  - Uses official NYC ZIP code boundary data (GeoPandas, Shapely, Plotly)
+  - Seamless integration with analytics workflow and report
+  - ZIP code aggregation logic matches heatmap logic for both groups
+  - No overlap between title and buttons; map is visually clear and professional
+
+### Enhanced
+- Improved map UI/UX for all interactive geographic visualizations
+- Documentation updated to reflect new map features and layout
+
 ## [1.5.0] - 2025-01-17
 
 ### Added

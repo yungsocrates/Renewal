@@ -4,7 +4,7 @@
 
 A comprehensive, production-ready analytics dashboard for analyzing NYC Public Schools substitute teacher and paraprofessional renewal data with advanced stacked bar visualizations, interactive geographic mapping, accurate data processing, and professional NYC DOE branding.
 
-## 🆕 Latest Major Enhancements (v1.5.0)
+## 🆕 Latest Major Enhancements (v1.6.0)
 
 ### Interactive Geographic Borough Map
 - **NYC Borough Visualization**: Interactive Plotly map showing all five NYC boroughs
@@ -19,6 +19,14 @@ A comprehensive, production-ready analytics dashboard for analyzing NYC Public S
 - **Borough Assignment**: Accurate mapping of ZIP codes to NYC boroughs with debugging verification
 - **Filtering Consistency**: Simplified eligibility logic using Status field only (COMP vs OUT)
 - **Realistic Distributions**: All five boroughs now show appropriate completion data
+
+### ZIP Code Choropleth Map
+- **Dual ZIP Code Choropleth**: Interactive map with true NYC ZIP code boundaries for both substitute paraprofessionals and teachers
+- **Toggle Buttons**: Top-right toggle for para/teacher counts
+- **Professional UI**: Title left-aligned, buttons top-right, no overlap
+- **Accurate Boundaries**: Official NYC ZIP code data (GeoPandas, Shapely, Plotly)
+- **Seamless Integration**: Map generated and embedded in analytics workflow and report
+- **Improved Data Pipeline**: ZIP code aggregation logic matches heatmap logic for both groups
 
 ## 🆕 Major Enhancements (v1.4.1)
 

@@ -245,7 +245,7 @@
             <div class="header-text">
                 <h1>Substitute Renewal Analytics Dashboard</h1>
                 <h2>Comprehensive Analysis of Substitute Teacher and Paraprofessional Renewal Data</h2>
-                <p class="date-info">Generated on: July 09, 2025 at 01:40 PM | Changes from previous data shown with ▲/▼ indicators</p>
+                <p class="date-info">Generated on: July 09, 2025 at 10:38 PM | Changes from previous data shown with ▲/▼ indicators</p>
             </div>
             <div class="header-logo">
                 <img src="Horizontal_logo_White_PublicSchools.png" alt="NYC Public Schools" class="logo">
@@ -431,11 +431,36 @@
         <div class="section">
             <h2>Interactive Visualizations</h2>
             <div class="chart-container">
-                <h3>Geographic Distribution by Borough</h3>
+                <h3>Geographic Distribution by Borough & County</h3>
                 <p style="color: #666; text-align: center; margin-bottom: 20px;">
-                    Interactive NYC map showing substitute distribution and renewal completion rates by borough
+                    Interactive map showing substitute distribution and renewal completion rates across NYC boroughs and neighboring counties (Westchester, Nassau, Suffolk, Bergen, Hudson, Union, Essex, Rockland, Fairfield)
                 </p>
                 <iframe src="nyc_borough_map.html" width="1250" height="850" frameborder="0"></iframe>
+            </div>
+            
+            <div class="chart-container">
+                <h3>ZIP Code Choropleth Map - Substitute Paras & Teachers</h3>
+                <p style="color: #666; text-align: center; margin-bottom: 20px;">
+                    Interactive choropleth map showing substitute paraprofessional and teacher counts by actual ZIP code boundaries. Use the toggle above the map to switch between groups.
+                </p>
+                <iframe src="nyc_zipcode_choropleth.html" width="1250" height="850" frameborder="0"></iframe>
+            </div>
+            
+            <!-- Existing ZIP code heatmaps below -->
+            <div class="chart-container">
+                <h3>ZIP Code Heatmap - Substitute Paraprofessionals</h3>
+                <p style="color: #666; text-align: center; margin-bottom: 20px;">
+                    Heat density map showing paraprofessional distribution across ZIP codes (purple = lower density, yellow = higher density)
+                </p>
+                <iframe src="para_zipcode_heatmap.html" width="1250" height="850" frameborder="0"></iframe>
+            </div>
+            
+            <div class="chart-container">
+                <h3>ZIP Code Heatmap - Substitute Teachers</h3>
+                <p style="color: #666; text-align: center; margin-bottom: 20px;">
+                    Heat density map showing teacher distribution across ZIP codes (purple = lower density, yellow = higher density)
+                </p>
+                <iframe src="teacher_zipcode_heatmap.html" width="1250" height="850" frameborder="0"></iframe>
             </div>
             
             <div class="chart-container">

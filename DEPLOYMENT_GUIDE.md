@@ -256,3 +256,12 @@ Your NYCDOE Substitute Renewal Analytics Dashboard is now ready for GitHub and N
 `https://YOUR_SITE_NAME.netlify.app`
 
 Happy analyzing! 📊✨
+
+## 🗺️ ZIP Code Choropleth Map (v1.6.0)
+
+- **Dual ZIP Code Choropleth**: Interactive map with true NYC ZIP code boundaries for both substitute paraprofessionals and teachers
+- **Toggle Buttons**: Top-right toggle for para/teacher counts
+- **Professional UI**: Title left-aligned, buttons top-right, no overlap
+- **Accurate Boundaries**: Official NYC ZIP code data (GeoPandas, Shapely, Plotly)
+- **Seamless Integration**: Map generated and embedded in analytics workflow and report
+- **Improved Data Pipeline**: ZIP code aggregation logic matches heatmap logic for both groups

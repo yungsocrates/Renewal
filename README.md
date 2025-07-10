@@ -147,6 +147,16 @@ Substitute Paraprofessionals:
   • Completion Rate: 82.5% (+1.2%)
 ```
 
+## 🗺️ ZIP Code Choropleth Map (NEW in v1.6.0)
+
+- **Dual ZIP Code Choropleth**: Interactive map with true NYC ZIP code boundaries for both substitute paraprofessionals and teachers
+- **Toggle Buttons**: Easily switch between para and teacher counts using top-right toggle buttons
+- **Professional UI**: Title is left-aligned, buttons are top-right, and map is fully embedded in the HTML report
+- **Accurate Boundaries**: Uses official NYC ZIP code boundary data (GeoPandas, Shapely, Plotly)
+- **Seamless Integration**: Map is generated and embedded automatically in the analytics workflow and report
+- **Improved Data Pipeline**: ZIP code aggregation logic matches heatmap logic for both groups
+- **Modern Layout**: No overlap between title and buttons; map is visually clear and professional
+
 ## 📁 Project Structure
 
 ```

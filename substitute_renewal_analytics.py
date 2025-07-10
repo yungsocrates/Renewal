@@ -12,15 +12,45 @@ Date: July 2025
 """
 
 import pandas as pd
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import plotly.offline as pyo
 import numpy as np
 import os
 import re
 import time
 from datetime import datetime
 import warnings
+
+# Plotly imports (temporarily needed for functions not yet moved to modules)
+import plotly.offline as pyo
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import json
+import geopandas as gpd
+from shapely.geometry import shape
+from shapely import wkt
+
+# Import our modular components
+from data_processing import (
+    load_csv_data, 
+    analyze_substitute_paraprofessionals,
+    analyze_substitute_teachers,
+    calculate_differences,
+    calculate_percentage_differences,
+    calculate_teacher_percentage_differences,
+    format_number,
+    format_percentage
+)
+from geographic_analysis import (
+    map_zip_to_borough,
+    get_zip_coordinates,
+    analyze_substitute_data_by_borough
+)
+from visualizations import (
+    create_visualization_charts,
+    create_nyc_borough_map,
+    create_para_zipcode_heatmap,
+    create_teacher_zipcode_heatmap,
+    create_zipcode_choropleth_map_dual
+)
 warnings.filterwarnings('ignore')
 
 # === GLOBAL CONSTANTS ===
@@ -614,265 +644,9 @@ def analyze_substitute_teachers(df_teacher):
     
     return results
 
-def create_visualization_charts(para_results, teacher_results, output_dir):
-    """
-    Create interactive visualization charts
+# create_visualization_charts function has been moved to visualizations.py module
     
-    Args:
-        para_results (dict): Paraprofessional analysis results
-        teacher_results (dict): Teacher analysis results
-        output_dir (str): Output directory for charts
-    """
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # Combined Stacked Bar Chart - one bar for SPA, one bar for STE
-    # Each bar shows the breakdown of renewal statuses
-    
-    # Define the status categories and their colors
-    status_categories = ['Completed', 'Outstanding - RA Incomplete', 'Outstanding - Days Only', 
-                        'Outstanding - Child Abuse Only', 'Outstanding - ATAS Only', 'Outstanding - Other']
-    colors = ['#28a745', '#dc3545', '#fd7e14', '#ffc107', '#17a2b8', '#6f42c1']
-    
-    # SPA data breakdown
-    spa_completed = para_results.get('total_complete', 0)
-    spa_ra_incomplete = para_results.get('ra_not_complete', 0)
-    spa_days_only = para_results.get('days_worked_only', 0)
-    spa_child_abuse_only = para_results.get('child_abuse_workshop_only', 0)
-    spa_atas_only = para_results.get('atas_only', 0)
-    spa_other = para_results.get('total_outstanding', 0) - spa_ra_incomplete - spa_days_only - spa_child_abuse_only - spa_atas_only
-    spa_other = max(0, spa_other)  # Ensure non-negative
-    
-    # STE data breakdown (using PRC/PRU)
-    ste_completed = teacher_results.get('total_prc_pru_complete', 0)
-    ste_ra_incomplete = teacher_results.get('prc_pru_ra_not_complete', 0)
-    ste_days_only = teacher_results.get('prc_pru_days_worked_only', 0)
-    ste_child_abuse_only = teacher_results.get('prc_pru_child_abuse_workshop_only', 0)
-    ste_atas_only = teacher_results.get('prc_pru_other_requirements_only', 0)  # Using "other requirements" as ATAS equivalent
-    ste_other = teacher_results.get('total_prc_pru_outstanding', 0) - ste_ra_incomplete - ste_days_only - ste_child_abuse_only - ste_atas_only
-    ste_other = max(0, ste_other)  # Ensure non-negative
-    
-    # Create stacked bar chart
-    fig_overview = go.Figure()
-    
-    # Add each status category as a separate trace
-    spa_values = [spa_completed, spa_ra_incomplete, spa_days_only, spa_child_abuse_only, spa_atas_only, spa_other]
-    ste_values = [ste_completed, ste_ra_incomplete, ste_days_only, ste_child_abuse_only, ste_atas_only, ste_other]
-    
-    # Calculate totals for percentage calculations
-    spa_total = sum(spa_values)
-    ste_total = sum(ste_values)
-    
-    for i, (category, color) in enumerate(zip(status_categories, colors)):
-        # Calculate percentages
-        spa_percentage = (spa_values[i] / spa_total * 100) if spa_total > 0 else 0
-        ste_percentage = (ste_values[i] / ste_total * 100) if ste_total > 0 else 0
-        
-        # Create text labels with count and percentage (only show if value > 0)
-        spa_text = f"{format_number(spa_values[i])}<br>({spa_percentage:.1f}%)" if spa_values[i] > 0 else ""
-        ste_text = f"{format_number(ste_values[i])}<br>({ste_percentage:.1f}%)" if ste_values[i] > 0 else ""
-        
-        fig_overview.add_trace(go.Bar(
-            name=category,
-            x=['Substitute Paraprofessionals (SPA)', 'Substitute Teachers (STE)'],
-            y=[spa_values[i], ste_values[i]],
-            marker_color=color,
-            text=[spa_text, ste_text],
-            textposition='inside',
-            textfont=dict(color='white', size=12, family="Arial Black"),
-            hovertemplate='<b>%{x}</b><br><b>' + category + '</b><br>Count: %{y:,}<br>Percentage: %{customdata:.1f}%<extra></extra>',
-            customdata=[spa_percentage, ste_percentage]
-        ))
-    
-    fig_overview.update_layout(
-        title='NYC DOE Substitute Renewal Status Breakdown: SPA vs STE',
-        xaxis_title='Substitute Groups',
-        yaxis_title='Number of Substitutes',
-        barmode='stack',
-        height=600,
-        width=900,
-        font=dict(size=12),
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='white',
-        legend=dict(
-            orientation="v",
-            yanchor="middle",
-            y=0.5,
-            xanchor="left",
-            x=1.02
-        ),
-        margin=dict(r=150, l=60, t=80, b=60)  # Adjusted margins for better fit
-    )
-    
-    # Add total counts as annotations (positioned higher above the bars)
-    spa_total_eligible = para_results.get('total_eligible', 0)
-    ste_total_eligible = teacher_results.get('total_prc_pru_eligible', 0)
-    
-    # Calculate the maximum height for positioning
-    max_spa_height = sum(spa_values)
-    max_ste_height = sum(ste_values)
-    
-    fig_overview.add_annotation(
-        x=0, y=max_spa_height + (max_spa_height * 0.08),  # Position 8% above the bar
-        text=f"Total Eligible: {format_number(spa_total_eligible)}",
-        showarrow=False,
-        font=dict(size=14, color="#2C5282", family="Arial Black"),
-        bgcolor="rgba(255,255,255,0.8)",
-        bordercolor="#2C5282",
-        borderwidth=1
-    )
-    
-    fig_overview.add_annotation(
-        x=1, y=max_ste_height + (max_ste_height * 0.08),  # Position 8% above the bar
-        text=f"Total Eligible: {format_number(ste_total_eligible)}",
-        showarrow=False,
-        font=dict(size=14, color="#2C5282", family="Arial Black"),
-        bgcolor="rgba(255,255,255,0.8)",
-        bordercolor="#2C5282",
-        borderwidth=1
-    )
-    
-    # Add grid lines for better readability
-    fig_overview.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray')
-    
-    overview_chart_file = os.path.join(output_dir, 'combined_overview.html')
-    pyo.plot(fig_overview, filename=overview_chart_file, auto_open=False)
-    
-    # Detailed Paraprofessional Chart (keep for reference)
-    para_labels = ['Total Eligible', 'Completed', 'Outstanding', 'RA Not Complete', 
-                   'Days Only', 'ATAS Only', 'Child Abuse Only']
-    para_values_detailed = [
-        para_results.get('total_eligible', 0),
-        para_results.get('total_complete', 0),
-        para_results.get('total_outstanding', 0),
-        para_results.get('ra_not_complete', 0),
-        para_results.get('days_worked_only', 0),
-        para_results.get('atas_only', 0),
-        para_results.get('child_abuse_workshop_only', 0)
-    ]
-    
-    fig_para = go.Figure(data=[
-        go.Bar(
-            x=para_labels,
-            y=para_values_detailed,
-            marker_color=['#2C5282', '#28a745', '#fd7e14', '#dc3545', 
-                         '#6f42c1', '#17a2b8', '#ffc107'],
-            text=[format_number(v) for v in para_values_detailed],
-            textposition='auto',
-            hovertemplate='<b>%{x}</b><br>Count: %{y:,}<extra></extra>'
-        )
-    ])
-    
-    fig_para.update_layout(
-        title='Substitute Paraprofessional (SPA) Detailed Analysis',
-        xaxis_title='Renewal Categories',
-        yaxis_title='Number of Substitutes',
-        height=500,
-        width=1200,
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='white'
-    )
-    
-    fig_para.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray')
-    fig_para.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray')
-    
-    para_chart_file = os.path.join(output_dir, 'paraprofessional_overview.html')
-    pyo.plot(fig_para, filename=para_chart_file, auto_open=False)
-    
-    # Detailed Teacher Chart (keep for reference)
-    teacher_labels = ['Total Eligible', 'PRC/PRU Eligible', 'PRC/PRU Complete', 
-                     'PRC/PRU Outstanding', 'Teachers On Leave', 'Retirees']
-    teacher_values_detailed = [
-        teacher_results.get('total_eligible', 0),
-        teacher_results.get('total_prc_pru_eligible', 0),
-        teacher_results.get('total_prc_pru_complete', 0),
-        teacher_results.get('total_prc_pru_outstanding', 0),
-        teacher_results.get('total_teachers_on_leave', 0),
-        teacher_results.get('total_retirees', 0)
-    ]
-    
-    fig_teacher = go.Figure(data=[
-        go.Bar(
-            x=teacher_labels,
-            y=teacher_values_detailed,
-            marker_color=['#1976d2', '#28a745', '#fd7e14', '#dc3545', 
-                         '#6f42c1', '#17a2b8'],
-            text=[format_number(v) for v in teacher_values_detailed],
-            textposition='auto',
-            hovertemplate='<b>%{x}</b><br>Count: %{y:,}<extra></extra>'
-        )
-    ])
-    
-    fig_teacher.update_layout(
-        title='Substitute Teacher (STE) Detailed Analysis',
-        xaxis_title='Renewal Categories',
-        yaxis_title='Number of Substitutes',
-        height=500,
-        width=1200,
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='white'
-    )
-    
-    fig_teacher.update_xaxes(showgrid=True, gridwidth=1, gridcolor='lightgray')
-    fig_teacher.update_yaxes(showgrid=True, gridwidth=1, gridcolor='lightgray')
-    
-    teacher_chart_file = os.path.join(output_dir, 'teacher_overview.html')
-    pyo.plot(fig_teacher, filename=teacher_chart_file, auto_open=False)
-    
-    # Combined Comparison Pie Chart (keep existing)
-    fig_combined = make_subplots(
-        rows=1, cols=2,
-        subplot_titles=('Paraprofessionals', 'Teachers'),
-        specs=[[{"type": "domain"}, {"type": "domain"}]]
-    )
-    
-    # Paraprofessional pie chart
-    fig_combined.add_trace(
-        go.Pie(
-            labels=['Complete', 'Outstanding'],
-            values=[para_results.get('total_complete', 0), 
-                   para_results.get('total_outstanding', 0)],
-            name="Paraprofessionals",
-            hole=0.3,
-            marker_colors=['#28a745', '#fd7e14'],
-            showlegend=True
-        ),
-        row=1, col=1
-    )
-
-    # Teacher pie chart
-    fig_combined.add_trace(
-        go.Pie(
-            labels=['Complete', 'Outstanding', 'On Leave', 'Retirees'],
-            values=[teacher_results.get('total_prc_pru_complete', 0),
-                   teacher_results.get('total_prc_pru_outstanding', 0),
-                   teacher_results.get('total_teachers_on_leave', 0),
-                   teacher_results.get('total_retirees', 0)],
-            name="Teachers",
-            hole=0.3,
-            marker_colors=['#28a745', '#fd7e14', '#6f42c1', '#17a2b8'],
-            showlegend=True
-        ),
-        row=1, col=2
-    )
-    
-    fig_combined.update_layout(
-        title_text="Renewal Status Comparison: Paraprofessionals vs Teachers",
-        height=500,
-        width=1200,
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=-0.15,
-            xanchor="center",
-            x=0.5,
-            traceorder="normal"
-        )
-    )
-    
-    combined_chart_file = os.path.join(output_dir, 'combined_comparison.html')
-    pyo.plot(fig_combined, filename=combined_chart_file, auto_open=False)
-    
-    return [overview_chart_file, para_chart_file, teacher_chart_file, combined_chart_file]
+# create_visualization_charts function has been moved to visualizations.py module
 
 def generate_html_report(para_results, teacher_results, para_differences, teacher_differences, 
                         para_percentage_differences, teacher_percentage_differences, 
@@ -1378,11 +1152,36 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
         <div class="section">
             <h2>Interactive Visualizations</h2>
             <div class="chart-container">
-                <h3>Geographic Distribution by Borough</h3>
+                <h3>Geographic Distribution by Borough & County</h3>
                 <p style="color: #666; text-align: center; margin-bottom: 20px;">
-                    Interactive NYC map showing substitute distribution and renewal completion rates by borough
+                    Interactive map showing substitute distribution and renewal completion rates across NYC boroughs and neighboring counties (Westchester, Nassau, Suffolk, Bergen, Hudson, Union, Essex, Rockland, Fairfield)
                 </p>
                 <iframe src="nyc_borough_map.html" width="1250" height="850" frameborder="0"></iframe>
+            </div>
+            
+            <div class="chart-container">
+                <h3>ZIP Code Choropleth Map - Substitute Paras & Teachers</h3>
+                <p style="color: #666; text-align: center; margin-bottom: 20px;">
+                    Interactive choropleth map showing substitute paraprofessional and teacher counts by actual ZIP code boundaries. Use the toggle above the map to switch between groups.
+                </p>
+                <iframe src="nyc_zipcode_choropleth.html" width="1250" height="850" frameborder="0"></iframe>
+            </div>
+            
+            <!-- Existing ZIP code heatmaps below -->
+            <div class="chart-container">
+                <h3>ZIP Code Heatmap - Substitute Paraprofessionals</h3>
+                <p style="color: #666; text-align: center; margin-bottom: 20px;">
+                    Heat density map showing paraprofessional distribution across ZIP codes (purple = lower density, yellow = higher density)
+                </p>
+                <iframe src="para_zipcode_heatmap.html" width="1250" height="850" frameborder="0"></iframe>
+            </div>
+            
+            <div class="chart-container">
+                <h3>ZIP Code Heatmap - Substitute Teachers</h3>
+                <p style="color: #666; text-align: center; margin-bottom: 20px;">
+                    Heat density map showing teacher distribution across ZIP codes (purple = lower density, yellow = higher density)
+                </p>
+                <iframe src="teacher_zipcode_heatmap.html" width="1250" height="850" frameborder="0"></iframe>
             </div>
             
             <div class="chart-container">
@@ -1576,8 +1375,8 @@ def calculate_teacher_percentage_differences(new_results, old_results):
 
 def get_nyc_zip_borough_mapping():
     """
-    Returns a dictionary mapping NYC ZIP codes to boroughs
-    Based on official NYC ZIP code boundaries
+    Returns a dictionary mapping NYC ZIP codes and neighboring counties to boroughs/areas
+    Based on official NYC ZIP code boundaries and surrounding counties
     """
     zip_to_borough = {}
     
@@ -1604,6 +1403,130 @@ def get_nyc_zip_borough_mapping():
     # Staten Island: 10301-10314
     for zip_code in range(10301, 10315):
         zip_to_borough[str(zip_code)] = 'Staten Island'
+    
+    # === NEIGHBORING COUNTIES ===
+    
+    # Westchester County (North of NYC)
+    westchester_zips = [
+        10501, 10502, 10504, 10505, 10506, 10507, 10508, 10509, 10510, 10511,
+        10512, 10514, 10516, 10517, 10518, 10519, 10520, 10521, 10522, 10523,
+        10524, 10526, 10527, 10528, 10530, 10532, 10533, 10535, 10536, 10537,
+        10538, 10540, 10541, 10542, 10543, 10545, 10546, 10547, 10548, 10549,
+        10550, 10551, 10552, 10553, 10560, 10562, 10566, 10567, 10570, 10571,
+        10572, 10573, 10576, 10577, 10578, 10579, 10580, 10583, 10587, 10588,
+        10589, 10590, 10591, 10594, 10595, 10596, 10597, 10598, 10601, 10602,
+        10603, 10604, 10605, 10606, 10607, 10608, 10609, 10610, 10701, 10702,
+        10703, 10704, 10705, 10706, 10707, 10708, 10709, 10710, 10801, 10802,
+        10803, 10804, 10805
+    ]
+    for zip_code in westchester_zips:
+        zip_to_borough[str(zip_code)] = 'Westchester County'
+    
+    # Nassau County (Long Island - West)
+    nassau_zips = [
+        11001, 11002, 11003, 11010, 11020, 11021, 11022, 11023, 11024, 11025,
+        11026, 11027, 11030, 11040, 11042, 11043, 11044, 11050, 11051, 11052,
+        11053, 11054, 11055, 11096, 11501, 11507, 11509, 11510, 11514, 11516,
+        11518, 11520, 11530, 11531, 11535, 11536, 11542, 11545, 11547, 11548,
+        11549, 11550, 11551, 11552, 11553, 11554, 11555, 11556, 11557, 11558,
+        11559, 11560, 11561, 11562, 11563, 11564, 11565, 11566, 11568, 11569,
+        11570, 11571, 11572, 11575, 11576, 11577, 11579, 11580, 11581, 11582,
+        11590, 11592, 11594, 11595, 11596, 11597, 11598, 11599
+    ]
+    for zip_code in nassau_zips:
+        zip_to_borough[str(zip_code)] = 'Nassau County'
+    
+    # Suffolk County (Long Island - East)
+    suffolk_zips = [
+        11701, 11702, 11703, 11704, 11705, 11706, 11707, 11708, 11709, 11710,
+        11713, 11714, 11715, 11716, 11717, 11718, 11719, 11720, 11721, 11722,
+        11724, 11725, 11726, 11727, 11729, 11730, 11731, 11732, 11733, 11734,
+        11735, 11736, 11737, 11738, 11739, 11740, 11741, 11742, 11743, 11746,
+        11747, 11749, 11751, 11752, 11753, 11754, 11755, 11756, 11757, 11758,
+        11760, 11762, 11763, 11764, 11766, 11767, 11768, 11769, 11770, 11771,
+        11772, 11773, 11775, 11776, 11777, 11778, 11779, 11780, 11782, 11783,
+        11784, 11786, 11787, 11788, 11789, 11790, 11792, 11794, 11795, 11796,
+        11797, 11798, 11901, 11930, 11931, 11932, 11933, 11934, 11935, 11937,
+        11939, 11940, 11941, 11942, 11944, 11946, 11947, 11948, 11949, 11950,
+        11951, 11952, 11953, 11954, 11955, 11956, 11957, 11958, 11959, 11960,
+        11961, 11962, 11963, 11964, 11965, 11967, 11968, 11969, 11970, 11971,
+        11972, 11973, 11975, 11976, 11977, 11978, 11980
+    ]
+    for zip_code in suffolk_zips:
+        zip_to_borough[str(zip_code)] = 'Suffolk County'
+    
+    # Bergen County, NJ (Northeast NJ)
+    bergen_zips = [
+        '07010', '07020', '07024', '07026', '07027', '07028', '07030', '07031', '07032', '07047',
+        '07055', '07057', '07070', '07071', '07072', '07073', '07074', '07075', '07076', '07094',
+        '07401', '07410', '07423', '07424', '07430', '07436', '07450', '07452', '07456', '07457',
+        '07458', '07463', '07465', '07481', '07495', '07601', '07602', '07603', '07604', '07605',
+        '07606', '07607', '07608', '07621', '07624', '07626', '07627', '07628', '07630', '07631',
+        '07632', '07640', '07641', '07642', '07643', '07644', '07645', '07646', '07647', '07648',
+        '07649', '07650', '07652', '07653', '07654', '07656', '07657', '07660', '07661', '07662',
+        '07663', '07666', '07670', '07675', '07676', '07677'
+    ]
+    for zip_code in bergen_zips:
+        zip_to_borough[zip_code] = 'Bergen County, NJ'
+    
+    # Hudson County, NJ (Adjacent to NYC)
+    hudson_zips = [
+        '07030', '07086', '07087', '07093', '07097', '07201', '07302', '07303', '07304', '07305',
+        '07306', '07307', '07308', '07310', '07311', '07399', '07047', '07086', '07087', '07093',
+        '07097', '07201', '07302', '07303', '07304', '07305', '07306', '07307', '07308', '07310',
+        '07311', '07399'
+    ]
+    for zip_code in hudson_zips:
+        zip_to_borough[zip_code] = 'Hudson County, NJ'
+    
+    # Union County, NJ 
+    union_zips = [
+        '07016', '07023', '07033', '07036', '07060', '07062', '07063', '07064', '07065', '07066',
+        '07067', '07076', '07080', '07081', '07083', '07088', '07090', '07091', '07092', '07095',
+        '07201', '07202', '07203', '07204', '07206', '07208', '07922', '07923', '07924', '07933',
+        '07974', '07980', '08812', '08820', '08827', '08832', '08840', '08863', '08873', '08901',
+        '08902', '08906', '08922'
+    ]
+    for zip_code in union_zips:
+        zip_to_borough[zip_code] = 'Union County, NJ'
+    
+    # Essex County, NJ
+    essex_zips = [
+        '07003', '07006', '07009', '07017', '07018', '07019', '07028', '07042', '07044', '07050',
+        '07052', '07079', '07102', '07103', '07104', '07105', '07106', '07107', '07108', '07109',
+        '07110', '07111', '07112', '07114', '07175', '07188', '07189', '07191', '07192', '07193',
+        '07195', '07198', '07199', '07936', '07940', '07950', '07960', '07961', '07962', '07963',
+        '07970', '07976', '07977', '07978', '07979', '07981', '07999'
+    ]
+    for zip_code in essex_zips:
+        zip_to_borough[zip_code] = 'Essex County, NJ'
+    
+    # Rockland County, NY (North of NYC, across Hudson River)
+    rockland_zips = [
+        '10901', '10913', '10914', '10920', '10923', '10924', '10925', '10926', '10927', '10928',
+        '10931', '10932', '10940', '10941', '10952', '10954', '10956', '10960', '10962', '10965',
+        '10968', '10970', '10974', '10975', '10976', '10977', '10980', '10982', '10983', '10984',
+        '10986', '10987', '10989', '10993', '10994', '10996', '10997', '10998'
+    ]
+    for zip_code in rockland_zips:
+        zip_to_borough[zip_code] = 'Rockland County, NY'
+    
+    # Fairfield County, CT (Northeast)
+    fairfield_zips = [
+        '06807', '06810', '06820', '06824', '06825', '06830', '06831', '06840', '06850', '06851',
+        '06853', '06854', '06855', '06856', '06870', '06877', '06878', '06880', '06883', '06888',
+        '06890', '06896', '06897', '06901', '06902', '06903', '06904', '06905', '06906', '06907',
+        '06910', '06911', '06912', '06913', '06914', '06920', '06921', '06926', '06927', '06928',
+        '06929', '06930', '06460', '06470', '06475', '06477', '06478', '06483', '06484', '06485',
+        '06489', '06490', '06492', '06497', '06498', '06610', '06611', '06612', '06614', '06615',
+        '06628', '06673', '06702', '06703', '06704', '06705', '06706', '06708', '06710', '06712',
+        '06713', '06716', '06770', '06776', '06801', '06804', '06810', '06811', '06812', '06813',
+        '06814', '06816', '06817', '06818', '06820', '06824', '06825', '06830', '06831', '06840',
+        '06850', '06851', '06853', '06854', '06855', '06856', '06870', '06877', '06878', '06880',
+        '06883', '06888', '06890', '06896', '06897'
+    ]
+    for zip_code in fairfield_zips:
+        zip_to_borough[zip_code] = 'Fairfield County, CT'
     
     return zip_to_borough
 
@@ -1646,23 +1569,142 @@ def map_zip_to_borough(postal_code):
     zip_to_borough = get_nyc_zip_borough_mapping()
     return zip_to_borough.get(postal_str, 'Unknown')
 
+def get_zip_coordinates(zip_code):
+    """
+    Get latitude and longitude coordinates for a given ZIP code
+    
+    Args:
+        zip_code (str): ZIP code to get coordinates for
+        
+    Returns:
+        dict: Dictionary with 'lat' and 'lon' keys, or None if not found
+    """
+    # Comprehensive NYC area ZIP code coordinates
+    zip_coords = {
+        # Manhattan ZIP codes
+        '10001': {'lat': 40.7505, 'lon': -73.9934}, '10002': {'lat': 40.7157, 'lon': -73.9860},
+        '10003': {'lat': 40.7322, 'lon': -73.9867}, '10004': {'lat': 40.7047, 'lon': -74.0142},
+        '10005': {'lat': 40.7069, 'lon': -74.0113}, '10006': {'lat': 40.7096, 'lon': -74.0130},
+        '10007': {'lat': 40.7133, 'lon': -74.0070}, '10009': {'lat': 40.7268, 'lon': -73.9779},
+        '10010': {'lat': 40.7397, 'lon': -73.9773}, '10011': {'lat': 40.7405, 'lon': -74.0014},
+        '10012': {'lat': 40.7253, 'lon': -74.0034}, '10013': {'lat': 40.7200, 'lon': -74.0026},
+        '10014': {'lat': 40.7342, 'lon': -74.0064}, '10016': {'lat': 40.7464, 'lon': -73.9756},
+        '10017': {'lat': 40.7520, 'lon': -73.9717}, '10018': {'lat': 40.7549, 'lon': -73.9930},
+        '10019': {'lat': 40.7658, 'lon': -73.9873}, '10020': {'lat': 40.7584, 'lon': -73.9738},
+        '10021': {'lat': 40.7697, 'lon': -73.9598}, '10022': {'lat': 40.7575, 'lon': -73.9709},
+        '10023': {'lat': 40.7765, 'lon': -73.9814}, '10024': {'lat': 40.7875, 'lon': -73.9745},
+        '10025': {'lat': 40.7982, 'lon': -73.9671}, '10026': {'lat': 40.8017, 'lon': -73.9527},
+        '10027': {'lat': 40.8115, 'lon': -73.9530}, '10028': {'lat': 40.7763, 'lon': -73.9532},
+        '10029': {'lat': 40.7919, 'lon': -73.9441}, '10030': {'lat': 40.8182, 'lon': -73.9444},
+        '10031': {'lat': 40.8251, 'lon': -73.9495}, '10032': {'lat': 40.8387, 'lon': -73.9417},
+        '10033': {'lat': 40.8502, 'lon': -73.9342}, '10034': {'lat': 40.8677, 'lon': -73.9212},
+        '10035': {'lat': 40.7957, 'lon': -73.9389}, '10036': {'lat': 40.7590, 'lon': -73.9845},
+        '10037': {'lat': 40.8142, 'lon': -73.9370}, '10038': {'lat': 40.7086, 'lon': -74.0020},
+        '10039': {'lat': 40.8267, 'lon': -73.9363}, '10040': {'lat': 40.8588, 'lon': -73.9302},
+        
+        # Brooklyn ZIP codes (sample - major ones)
+        '11201': {'lat': 40.6945, 'lon': -73.9901}, '11203': {'lat': 40.6514, 'lon': -73.9342},
+        '11204': {'lat': 40.6189, 'lon': -73.9842}, '11205': {'lat': 40.6945, 'lon': -73.9665},
+        '11206': {'lat': 40.7022, 'lon': -73.9421}, '11207': {'lat': 40.6720, 'lon': -73.8946},
+        '11208': {'lat': 40.6591, 'lon': -73.8736}, '11209': {'lat': 40.6226, 'lon': -74.0305},
+        '11210': {'lat': 40.6282, 'lon': -73.9473}, '11211': {'lat': 40.7115, 'lon': -73.9535},
+        '11212': {'lat': 40.6627, 'lon': -73.9063}, '11213': {'lat': 40.6711, 'lon': -73.9363},
+        '11214': {'lat': 40.5993, 'lon': -73.9942}, '11215': {'lat': 40.6628, 'lon': -73.9865},
+        '11216': {'lat': 40.6808, 'lon': -73.9419}, '11217': {'lat': 40.6806, 'lon': -73.9779},
+        '11218': {'lat': 40.6434, 'lon': -73.9773}, '11219': {'lat': 40.6323, 'lon': -73.9963},
+        '11220': {'lat': 40.6412, 'lon': -74.0170}, '11221': {'lat': 40.6911, 'lon': -73.9275},
+        '11222': {'lat': 40.7284, 'lon': -73.9474}, '11223': {'lat': 40.5969, 'lon': -73.9732},
+        '11224': {'lat': 40.5775, 'lon': -73.9874}, '11225': {'lat': 40.6622, 'lon': -73.9541},
+        '11226': {'lat': 40.6465, 'lon': -73.9563}, '11228': {'lat': 40.6166, 'lon': -74.0120},
+        '11229': {'lat': 40.6008, 'lon': -73.9442}, '11230': {'lat': 40.6226, 'lon': -73.9652},
+        '11231': {'lat': 40.6782, 'lon': -74.0067}, '11232': {'lat': 40.6569, 'lon': -74.0090},
+        '11233': {'lat': 40.6783, 'lon': -73.9196}, '11234': {'lat': 40.5992, 'lon': -73.9192},
+        '11235': {'lat': 40.5847, 'lon': -73.9484}, '11236': {'lat': 40.6396, 'lon': -73.9014},
+        '11237': {'lat': 40.7040, 'lon': -73.8811}, '11238': {'lat': 40.6795, 'lon': -73.9646},
+        '11239': {'lat': 40.6471, 'lon': -73.8705}, '11249': {'lat': 40.7208, 'lon': -73.9425},
+        '11251': {'lat': 40.6901, 'lon': -73.9901}, '11252': {'lat': 40.6901, 'lon': -73.9901},
+        
+        # Queens ZIP codes (sample - major ones)
+        '11004': {'lat': 40.7450, 'lon': -73.7713}, '11005': {'lat': 40.7480, 'lon': -73.7713},
+        '11101': {'lat': 40.7359, 'lon': -73.9392}, '11102': {'lat': 40.7734, 'lon': -73.9196},
+        '11103': {'lat': 40.7634, 'lon': -73.9118}, '11104': {'lat': 40.7443, 'lon': -73.9196},
+        '11105': {'lat': 40.7789, 'lon': -73.9067}, '11106': {'lat': 40.7628, 'lon': -73.9302},
+        '11354': {'lat': 40.7687, 'lon': -73.8370}, '11355': {'lat': 40.7498, 'lon': -73.8201},
+        '11356': {'lat': 40.7848, 'lon': -73.8468}, '11357': {'lat': 40.7858, 'lon': -73.8269},
+        '11358': {'lat': 40.7608, 'lon': -73.7958}, '11360': {'lat': 40.7828, 'lon': -73.7784},
+        '11361': {'lat': 40.7638, 'lon': -73.7738}, '11362': {'lat': 40.7578, 'lon': -73.7678},
+        '11363': {'lat': 40.7718, 'lon': -73.7535}, '11364': {'lat': 40.7448, 'lon': -73.7735},
+        '11365': {'lat': 40.7407, 'lon': -73.7949}, '11366': {'lat': 40.7288, 'lon': -73.7949},
+        '11367': {'lat': 40.7318, 'lon': -73.8249}, '11368': {'lat': 40.7508, 'lon': -73.8549},
+        '11369': {'lat': 40.7628, 'lon': -73.8649}, '11370': {'lat': 40.7648, 'lon': -73.8949},
+        '11372': {'lat': 40.7548, 'lon': -73.8749}, '11373': {'lat': 40.7408, 'lon': -73.8749},
+        '11374': {'lat': 40.7288, 'lon': -73.8549}, '11375': {'lat': 40.7198, 'lon': -73.8349},
+        '11377': {'lat': 40.7437, 'lon': -73.9049}, '11378': {'lat': 40.7167, 'lon': -73.8949},
+        '11379': {'lat': 40.7217, 'lon': -73.8749}, '11385': {'lat': 40.7017, 'lon': -73.8749},
+        '11411': {'lat': 40.6917, 'lon': -73.7449}, '11412': {'lat': 40.6997, 'lon': -73.7649},
+        '11413': {'lat': 40.6717, 'lon': -73.7649}, '11414': {'lat': 40.6577, 'lon': -73.8449},
+        '11415': {'lat': 40.7067, 'lon': -73.8249}, '11416': {'lat': 40.6837, 'lon': -73.8449},
+        '11417': {'lat': 40.6777, 'lon': -73.8349}, '11418': {'lat': 40.6977, 'lon': -73.8349},
+        '11419': {'lat': 40.6917, 'lon': -73.8149}, '11420': {'lat': 40.6677, 'lon': -73.7649},
+        '11421': {'lat': 40.6937, 'lon': -73.8649}, '11422': {'lat': 40.6597, 'lon': -73.7349},
+        '11423': {'lat': 40.7097, 'lon': -73.7649}, '11426': {'lat': 40.7377, 'lon': -73.7049},
+        '11427': {'lat': 40.7297, 'lon': -73.7249}, '11428': {'lat': 40.7177, 'lon': -73.7449},
+        '11429': {'lat': 40.7087, 'lon': -73.7349}, '11432': {'lat': 40.7147, 'lon': -73.7949},
+        '11433': {'lat': 40.6987, 'lon': -73.7949}, '11434': {'lat': 40.6747, 'lon': -73.7749},
+        '11435': {'lat': 40.7007, 'lon': -73.8049}, '11436': {'lat': 40.6857, 'lon': -73.7749},
+        
+        # Bronx ZIP codes (sample - major ones)
+        '10451': {'lat': 40.8204, 'lon': -73.9252}, '10452': {'lat': 40.8407, 'lon': -73.9240},
+        '10453': {'lat': 40.8518, 'lon': -73.9123}, '10454': {'lat': 40.8088, 'lon': -73.9187},
+        '10455': {'lat': 40.8142, 'lon': -73.9089}, '10456': {'lat': 40.8278, 'lon': -73.9098},
+        '10457': {'lat': 40.8476, 'lon': -73.9009}, '10458': {'lat': 40.8618, 'lon': -73.8883},
+        '10459': {'lat': 40.8238, 'lon': -73.8942}, '10460': {'lat': 40.8418, 'lon': -73.8783},
+        '10461': {'lat': 40.8478, 'lon': -73.8353}, '10462': {'lat': 40.8418, 'lon': -73.8604},
+        '10463': {'lat': 40.8795, 'lon': -73.9073}, '10464': {'lat': 40.8445, 'lon': -73.7854},
+        '10465': {'lat': 40.8265, 'lon': -73.8254}, '10466': {'lat': 40.8895, 'lon': -73.8504},
+        '10467': {'lat': 40.8735, 'lon': -73.8783}, '10468': {'lat': 40.8678, 'lon': -73.9004},
+        '10469': {'lat': 40.8678, 'lon': -73.8504}, '10470': {'lat': 40.8895, 'lon': -73.8354},
+        '10471': {'lat': 40.9045, 'lon': -73.8984}, '10472': {'lat': 40.8298, 'lon': -73.8704},
+        '10473': {'lat': 40.8198, 'lon': -73.8504}, '10474': {'lat': 40.8098, 'lon': -73.8904},
+        '10475': {'lat': 40.8795, 'lon': -73.8254},
+        
+        # Staten Island ZIP codes
+        '10301': {'lat': 40.6348, 'lon': -74.0776}, '10302': {'lat': 40.6278, 'lon': -74.0987},
+        '10303': {'lat': 40.6348, 'lon': -74.0987}, '10304': {'lat': 40.6098, 'lon': -74.0865},
+        '10305': {'lat': 40.5898, 'lon': -74.0754}, '10306': {'lat': 40.5698, 'lon': -74.1243},
+        '10307': {'lat': 40.5098, 'lon': -74.2443}, '10308': {'lat': 40.5548, 'lon': -74.1654},
+        '10309': {'lat': 40.5298, 'lon': -74.2054}, '10310': {'lat': 40.6298, 'lon': -74.1154},
+        '10311': {'lat': 40.6098, 'lon': -74.1654}, '10312': {'lat': 40.5548, 'lon': -74.1954},
+        '10313': {'lat': 40.5798, 'lon': -74.2054}, '10314': {'lat': 40.5998, 'lon': -74.1654}
+    }
+    
+    # Clean the ZIP code input
+    clean_zip = str(zip_code).split('.')[0].split('-')[0].strip()
+    
+    # Return coordinates if found
+    return zip_coords.get(clean_zip)
+    
 def analyze_substitute_data_by_borough(df_para, df_teacher):
     """
-    Analyze substitute data by NYC borough using existing Borough column
+    Analyze substitute data by NYC borough and neighboring counties using Borough column
     
     Args:
         df_para (pd.DataFrame): Paraprofessional data with Borough column
         df_teacher (pd.DataFrame): Teacher data with Borough column
         
     Returns:
-        dict: Borough analysis results
+        dict: Borough/county analysis results
     """
     borough_data = {}
     
-    # Initialize borough data structure
-    boroughs = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island', 'Unknown']
-    for borough in boroughs:
-        borough_data[borough] = {
+    # Initialize borough and county data structure
+    areas = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island', 
+             'Westchester County', 'Nassau County', 'Suffolk County', 
+             'Bergen County, NJ', 'Hudson County, NJ', 'Union County, NJ', 
+             'Essex County, NJ', 'Rockland County, NY', 'Fairfield County, CT', 'Unknown']
+    
+    for area in areas:
+        borough_data[area] = {
             'para_total': 0,
             'para_eligible': 0,
             'para_complete': 0,
@@ -1677,13 +1719,13 @@ def analyze_substitute_data_by_borough(df_para, df_teacher):
     
     # Process paraprofessional data
     if df_para is not None and not df_para.empty:
-        print(f"Processing {len(df_para)} paraprofessional records for borough analysis...")
+        print(f"Processing {len(df_para)} paraprofessional records for geographic analysis...")
         
-        # Get total counts by borough from ALL data
-        para_total_by_borough = df_para.groupby('Borough').size().to_dict()
-        print(f"Para totals by borough: {para_total_by_borough}")
+        # Get total counts by area from ALL data
+        para_total_by_area = df_para.groupby('Borough').size().to_dict()
+        print(f"Para totals by area: {para_total_by_area}")
         
-        # Only filter by Status for borough analysis - much simpler
+        # Only filter by Status for analysis - much simpler
         df_para_eligible = df_para[df_para['Status'].notna()].copy()
         
         print(f"Para records with status: {len(df_para_eligible)}")
@@ -1691,39 +1733,39 @@ def analyze_substitute_data_by_borough(df_para, df_teacher):
         # Calculate completion status - just check if Status is 'COMP' vs 'OUT'
         df_para_eligible['Complete'] = (df_para_eligible['Status'] == 'COMP')
         
-        # Group by borough
-        para_borough_stats = df_para_eligible.groupby('Borough').agg({
+        # Group by area
+        para_area_stats = df_para_eligible.groupby('Borough').agg({
             'Empl ID': 'count',
             'Complete': 'sum'
         }).reset_index()
         
-        para_borough_stats.columns = ['Borough', 'Total_Eligible', 'Total_Complete']
-        para_borough_stats['Total_Outstanding'] = para_borough_stats['Total_Eligible'] - para_borough_stats['Total_Complete']
+        para_area_stats.columns = ['Borough', 'Total_Eligible', 'Total_Complete']
+        para_area_stats['Total_Outstanding'] = para_area_stats['Total_Eligible'] - para_area_stats['Total_Complete']
         
-        print(f"Para borough stats:\n{para_borough_stats}")
+        print(f"Para area stats:\n{para_area_stats}")
         
         # Update borough data
-        for _, row in para_borough_stats.iterrows():
-            borough = row['Borough']
-            if borough in borough_data:
-                borough_data[borough]['para_total'] = para_total_by_borough.get(borough, 0)
-                borough_data[borough]['para_eligible'] = row['Total_Eligible']
-                borough_data[borough]['para_complete'] = row['Total_Complete']
-                borough_data[borough]['para_outstanding'] = row['Total_Outstanding']
-                borough_data[borough]['para_completion_rate'] = (
+        for _, row in para_area_stats.iterrows():
+            area = row['Borough']
+            if area in borough_data:
+                borough_data[area]['para_total'] = para_total_by_area.get(area, 0)
+                borough_data[area]['para_eligible'] = row['Total_Eligible']
+                borough_data[area]['para_complete'] = row['Total_Complete']
+                borough_data[area]['para_outstanding'] = row['Total_Outstanding']
+                borough_data[area]['para_completion_rate'] = (
                     row['Total_Complete'] / row['Total_Eligible'] * 100
                     if row['Total_Eligible'] > 0 else 0
                 )
     
     # Process teacher data
     if df_teacher is not None and not df_teacher.empty:
-        print(f"Processing {len(df_teacher)} teacher records for borough analysis...")
+        print(f"Processing {len(df_teacher)} teacher records for geographic analysis...")
         
-        # Get total counts by borough from ALL data
-        teacher_total_by_borough = df_teacher.groupby('Borough').size().to_dict()
-        print(f"Teacher totals by borough: {teacher_total_by_borough}")
+        # Get total counts by area from ALL data
+        teacher_total_by_area = df_teacher.groupby('Borough').size().to_dict()
+        print(f"Teacher totals by area: {teacher_total_by_area}")
         
-        # Only filter by Status for borough analysis - much simpler
+        # Only filter by Status for analysis
         df_teacher_eligible = df_teacher[df_teacher['Status'].notna()].copy()
         
         print(f"Teacher records with status: {len(df_teacher_eligible)}")
@@ -1731,26 +1773,26 @@ def analyze_substitute_data_by_borough(df_para, df_teacher):
         # Calculate completion status - just check if Status is 'COMP' vs 'OUT'
         df_teacher_eligible['Complete'] = (df_teacher_eligible['Status'] == 'COMP')
         
-        # Group by borough
-        teacher_borough_stats = df_teacher_eligible.groupby('Borough').agg({
+        # Group by area
+        teacher_area_stats = df_teacher_eligible.groupby('Borough').agg({
             'Empl ID': 'count',
             'Complete': 'sum'
         }).reset_index()
         
-        teacher_borough_stats.columns = ['Borough', 'Total_Eligible', 'Total_Complete']
-        teacher_borough_stats['Total_Outstanding'] = teacher_borough_stats['Total_Eligible'] - teacher_borough_stats['Total_Complete']
+        teacher_area_stats.columns = ['Borough', 'Total_Eligible', 'Total_Complete']
+        teacher_area_stats['Total_Outstanding'] = teacher_area_stats['Total_Eligible'] - teacher_area_stats['Total_Complete']
         
-        print(f"Teacher borough stats:\n{teacher_borough_stats}")
+        print(f"Teacher area stats:\n{teacher_area_stats}")
         
         # Update borough data
-        for _, row in teacher_borough_stats.iterrows():
-            borough = row['Borough']
-            if borough in borough_data:
-                borough_data[borough]['teacher_total'] = teacher_total_by_borough.get(borough, 0)
-                borough_data[borough]['teacher_eligible'] = row['Total_Eligible']
-                borough_data[borough]['teacher_complete'] = row['Total_Complete']
-                borough_data[borough]['teacher_outstanding'] = row['Total_Outstanding']
-                borough_data[borough]['teacher_completion_rate'] = (
+        for _, row in teacher_area_stats.iterrows():
+            area = row['Borough']
+            if area in borough_data:
+                borough_data[area]['teacher_total'] = teacher_total_by_area.get(area, 0)
+                borough_data[area]['teacher_eligible'] = row['Total_Eligible']
+                borough_data[area]['teacher_complete'] = row['Total_Complete']
+                borough_data[area]['teacher_outstanding'] = row['Total_Outstanding']
+                borough_data[area]['teacher_completion_rate'] = (
                     row['Total_Complete'] / row['Total_Eligible'] * 100
                     if row['Total_Eligible'] > 0 else 0
                 )
@@ -1759,73 +1801,94 @@ def analyze_substitute_data_by_borough(df_para, df_teacher):
 
 def create_nyc_borough_map(borough_data, output_dir):
     """
-    Create interactive NYC borough map showing substitute data
+    Create interactive NYC area map showing substitute data for boroughs and neighboring counties
     
     Args:
-        borough_data (dict): Borough analysis results
+        borough_data (dict): Borough/county analysis results
         output_dir (str): Output directory for HTML file
         
     Returns:
         str: Path to generated HTML file
     """
-    # NYC Borough centroids for positioning
-    borough_coords = {
+    # NYC Borough and neighboring county centroids for positioning
+    area_coords = {
+        # NYC Boroughs
         'Manhattan': {'lat': 40.7831, 'lon': -73.9712},
         'Brooklyn': {'lat': 40.6782, 'lon': -73.9442},
         'Queens': {'lat': 40.7282, 'lon': -73.7949},
         'Bronx': {'lat': 40.8448, 'lon': -73.8648},
-        'Staten Island': {'lat': 40.5795, 'lon': -74.1502}
+        'Staten Island': {'lat': 40.5795, 'lon': -74.1502},
+        
+        # Neighboring Counties
+        'Westchester County': {'lat': 41.1220, 'lon': -73.7949},
+        'Nassau County': {'lat': 40.6546, 'lon': -73.5594},
+        'Suffolk County': {'lat': 40.8176, 'lon': -72.6851},
+        'Bergen County, NJ': {'lat': 40.9264, 'lon': -74.0431},
+        'Hudson County, NJ': {'lat': 40.7282, 'lon': -74.0776},
+        'Union County, NJ': {'lat': 40.6218, 'lon': -74.3107},
+        'Essex County, NJ': {'lat': 40.7864, 'lon': -74.2191},
+        'Rockland County, NY': {'lat': 41.1489, 'lon': -73.9441},
+        'Fairfield County, CT': {'lat': 41.2033, 'lon': -73.2967}
     }
     
     # Prepare data for visualization
     lats = []
     lons = []
-    borough_names = []
+    area_names = []
     para_counts = []
     teacher_counts = []
     para_completion_rates = []
     teacher_completion_rates = []
     hover_texts = []
+    area_types = []  # To distinguish NYC vs neighboring areas
     
-    for borough, coords in borough_coords.items():
-        if borough in borough_data:
-            data = borough_data[borough]
+    for area, coords in area_coords.items():
+        if area in borough_data:
+            data = borough_data[area]
             
-            lats.append(coords['lat'])
-            lons.append(coords['lon'])
-            borough_names.append(borough)
-            para_counts.append(data['para_eligible'])
-            teacher_counts.append(data['teacher_eligible'])
-            para_completion_rates.append(data['para_completion_rate'])
-            teacher_completion_rates.append(data['teacher_completion_rate'])
-            
-            # Create hover text
-            hover_text = f"""
-            <b>{borough}</b><br>
-            <b>Substitute Paraprofessionals:</b><br>
-            • Total Eligible: {data['para_eligible']:,}<br>
-            • Completed: {data['para_complete']:,}<br>
-            • Outstanding: {data['para_outstanding']:,}<br>
-            • Completion Rate: {data['para_completion_rate']:.1f}%<br>
-            <br>
-            <b>Substitute Teachers:</b><br>
-            • Total Eligible: {data['teacher_eligible']:,}<br>
-            • Completed: {data['teacher_complete']:,}<br>
-            • Outstanding: {data['teacher_outstanding']:,}<br>
-            • Completion Rate: {data['teacher_completion_rate']:.1f}%
-            """
-            hover_texts.append(hover_text)
+            # Only include areas with data
+            if data['para_eligible'] > 0 or data['teacher_eligible'] > 0:
+                lats.append(coords['lat'])
+                lons.append(coords['lon'])
+                area_names.append(area)
+                para_counts.append(data['para_eligible'])
+                teacher_counts.append(data['teacher_eligible'])
+                para_completion_rates.append(data['para_completion_rate'])
+                teacher_completion_rates.append(data['teacher_completion_rate'])
+                
+                # Determine area type for color coding
+                if area in ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island']:
+                    area_types.append('NYC Borough')
+                else:
+                    area_types.append('Neighboring County')
+                
+                # Create hover text
+                hover_text = f"""
+                <b>{area}</b><br>
+                <b>Substitute Paraprofessionals:</b><br>
+                • Total Eligible: {data['para_eligible']:,}<br>
+                • Completed: {data['para_complete']:,}<br>
+                • Outstanding: {data['para_outstanding']:,}<br>
+                • Completion Rate: {data['para_completion_rate']:.1f}%<br>
+                <br>
+                <b>Substitute Teachers:</b><br>
+                • Total Eligible: {data['teacher_eligible']:,}<br>
+                • Completed: {data['teacher_complete']:,}<br>
+                • Outstanding: {data['teacher_outstanding']:,}<br>
+                • Completion Rate: {data['teacher_completion_rate']:.1f}%
+                """
+                hover_texts.append(hover_text)
     
     # Create the map
     fig = go.Figure()
     
-    # Add scatter points for each borough
+    # Add scatter points for paraprofessionals
     fig.add_trace(go.Scattermapbox(
         lat=lats,
         lon=lons,
         mode='markers',
         marker=dict(
-            size=[max(20, min(80, count/10)) for count in para_counts],  # Size based on para count
+            size=[max(15, min(80, count/10)) for count in para_counts],  # Size based on para count
             color=para_completion_rates,
             colorscale='RdYlGn',
             cmin=0,
@@ -1841,9 +1904,10 @@ def create_nyc_borough_map(borough_data, output_dir):
                 x=-0.1,  # Position on the left side
                 y=0.5
             ),
-            sizemode='diameter'
+            sizemode='diameter',
+            opacity=0.8
         ),
-        text=borough_names,
+        text=area_names,
         hovertext=hover_texts,
         hoverinfo='text',
         name='Paraprofessionals'
@@ -1855,7 +1919,7 @@ def create_nyc_borough_map(borough_data, output_dir):
         lon=lons,
         mode='markers',
         marker=dict(
-            size=[max(15, min(60, count/15)) for count in teacher_counts],  # Size based on teacher count
+            size=[max(12, min(60, count/15)) for count in teacher_counts],  # Size based on teacher count
             color=teacher_completion_rates,
             colorscale='Blues',
             cmin=0,
@@ -1874,23 +1938,23 @@ def create_nyc_borough_map(borough_data, output_dir):
             sizemode='diameter',
             opacity=0.7
         ),
-        text=borough_names,
+        text=area_names,
         hovertext=hover_texts,
         hoverinfo='text',
         name='Teachers'
     ))
     
-    # Update layout
+    # Update layout for expanded view
     fig.update_layout(
         title=dict(
-            text="NYC Substitute Renewal Analytics by Borough",
+            text="NYC & Tri-State Area Substitute Renewal Analytics",
             x=0.5,
             font=dict(size=24, color='#2c3e50', family='Arial Black')
         ),
         mapbox=dict(
             style='open-street-map',
-            center=dict(lat=40.7128, lon=-73.9060),  # NYC center
-            zoom=9.5
+            center=dict(lat=40.7589, lon=-73.7004),  # Centered between NYC and surrounding areas
+            zoom=8.5  # Zoomed out to show neighboring counties
         ),
         height=800,
         width=1200,
@@ -1908,7 +1972,7 @@ def create_nyc_borough_map(borough_data, output_dir):
                 y=0.02,
                 xref='paper',
                 yref='paper',
-                text='<b>Circle Size:</b> Number of Eligible Substitutes<br><b>Color:</b> Completion Rate',
+                text='<b>Circle Size:</b> Number of Eligible Substitutes<br><b>Color:</b> Completion Rate<br><b>Border:</b> Dark Blue = NYC, Purple = Counties',
                 showarrow=False,
                 bgcolor='rgba(255,255,255,0.8)',
                 bordercolor='rgba(0,0,0,0.2)',
@@ -1923,6 +1987,229 @@ def create_nyc_borough_map(borough_data, output_dir):
     pyo.plot(fig, filename=output_file, auto_open=False)
     
     return output_file
+
+def create_para_zipcode_heatmap(df_para, output_dir):
+    """
+    Create ZIP code heatmap showing paraprofessional distribution density
+    
+    Args:
+        df_para (pd.DataFrame): Paraprofessional data with ZIP codes
+        output_dir (str): Output directory for HTML file
+        
+    Returns:
+        str: Path to generated HTML file
+    """
+    # Process paraprofessional data
+    zip_counts = {}
+    if df_para is not None and not df_para.empty:
+        para_zip_counts = df_para['Postal'].value_counts()
+        for zip_code, count in para_zip_counts.items():
+            # Clean ZIP code - remove .0 from floats and convert to string
+            clean_zip = str(zip_code).replace('.0', '').strip()
+            if clean_zip not in ['Unknown', 'nan', 'None', '']:
+                zip_counts[clean_zip] = count
+    
+    # Get actual ZIP code coordinates
+    lats = []
+    lons = []
+    counts = []
+    zip_codes = []
+    
+    for zip_code, count in zip_counts.items():
+        coords = get_zip_coordinates(zip_code)
+        if coords:
+            lats.append(coords['lat'])
+            lons.append(coords['lon'])
+            counts.append(count)
+            zip_codes.append(zip_code)
+    
+    # Create heatmap
+    fig = go.Figure()
+    
+    if lats and lons and counts:
+        max_count = max(counts) if counts else 1
+        
+        # Create hover text for each point
+        hover_texts = [f"ZIP Code: {zip_code}<br>Paraprofessionals: {count}" 
+                       for zip_code, count in zip(zip_codes, counts)]
+        
+        fig.add_trace(go.Densitymapbox(
+            lat=lats,
+            lon=lons,
+            z=counts,
+            radius=15,
+            colorscale='Viridis',
+            zmin=0,
+            zmax=max_count,
+            showscale=True,
+            hovertemplate='%{text}<extra></extra>',
+            text=hover_texts,
+            colorbar=dict(
+                title=f"Number of Paraprofessionals<br>(Max: {max_count})",
+                x=1.02
+            )
+        ))
+    
+    # Update layout with visible background map
+    fig.update_layout(
+        title=dict(
+            text="NYC Substitute Paraprofessionals - ZIP Code Distribution",
+            x=0.5,
+            font=dict(size=20, color='#2c3e50')
+        ),
+        mapbox=dict(
+            style='carto-positron',  # Clean black and white map
+            center=dict(lat=40.7128, lon=-73.9060),
+            zoom=10
+        ),
+        height=800,
+        width=1200,
+        margin=dict(l=0, r=0, t=60, b=0)
+    )
+    
+    # Save as HTML
+    output_file = os.path.join(output_dir, 'para_zipcode_heatmap.html')
+    pyo.plot(fig, filename=output_file, auto_open=False)
+    
+    return output_file
+
+def create_teacher_zipcode_heatmap(df_teacher, output_dir):
+    """
+    Create ZIP code heatmap showing teacher distribution density
+    
+    Args:
+        df_teacher (pd.DataFrame): Teacher data with ZIP codes
+        output_dir (str): Output directory for HTML file
+        
+    Returns:
+        str: Path to generated HTML file
+    """
+    # Process teacher data
+    zip_counts = {}
+    if df_teacher is not None and not df_teacher.empty:
+        teacher_zip_counts = df_teacher['Postal'].value_counts()
+        for zip_code, count in teacher_zip_counts.items():
+            # Clean ZIP code - remove .0 from floats and convert to string
+            clean_zip = str(zip_code).replace('.0', '').strip()
+            if clean_zip not in ['Unknown', 'nan', 'None', '']:
+                zip_counts[clean_zip] = count
+    
+    # Get actual ZIP code coordinates
+    lats = []
+    lons = []
+    counts = []
+    zip_codes = []
+    
+    for zip_code, count in zip_counts.items():
+        coords = get_zip_coordinates(zip_code)
+        if coords:
+            lats.append(coords['lat'])
+            lons.append(coords['lon'])
+            counts.append(count)
+            zip_codes.append(zip_code)
+    
+    # Create heatmap
+    fig = go.Figure()
+    
+    if lats and lons and counts:
+        max_count = max(counts) if counts else 1
+        
+        # Create hover text for each point
+        hover_texts = [f"ZIP Code: {zip_code}<br>Teachers: {count}" 
+                       for zip_code, count in zip(zip_codes, counts)]
+        
+        fig.add_trace(go.Densitymapbox(
+            lat=lats,
+            lon=lons,
+            z=counts,
+            radius=15,
+            colorscale='Plasma',
+            zmin=0,
+            zmax=max_count,
+            showscale=True,
+            hovertemplate='%{text}<extra></extra>',
+            text=hover_texts,
+            colorbar=dict(
+                title=f"Number of Teachers<br>(Max: {max_count})",
+                x=1.02
+            )
+        ))
+    
+    # Update layout with visible background map
+    fig.update_layout(
+        title=dict(
+            text="NYC Substitute Teachers - ZIP Code Distribution",
+            x=0.5,
+            font=dict(size=20, color='#2c3e50')
+        ),
+        mapbox=dict(
+            style='carto-positron',  # Clean black and white map
+            center=dict(lat=40.7128, lon=-73.9060),
+            zoom=10
+        ),
+        height=800,
+        width=1200,
+        margin=dict(l=0, r=0, t=60, b=0)
+    )
+    
+    # Save as HTML
+    output_file = os.path.join(output_dir, 'teacher_zipcode_heatmap.html')
+    pyo.plot(fig, filename=output_file, auto_open=False)
+    
+    return output_file
+
+# === ZIP CODE CHOROPLETH MAP GENERATION ===
+def generate_zipcode_choropleth():
+    import pandas as pd
+    # Load boundary data
+    boundary_csv = os.path.join(RENEWAL_WORKSPACE, 'Modified_Zip_Code_Tabulation_Areas__MODZCTA__20250709.csv')
+    df_boundaries = pd.read_csv(boundary_csv)
+
+    # Load para and teacher data
+    para_csv = os.path.join(RENEWAL_WORKSPACE, 'substitute_paraprofessionals.csv')
+    teacher_csv = os.path.join(RENEWAL_WORKSPACE, 'substitute_teachers.csv')
+    df_para = pd.read_csv(para_csv)
+    df_teacher = pd.read_csv(teacher_csv)
+
+    # --- Clean and aggregate ZIP codes for paras ---
+    para_zip_counts = (
+        df_para['Postal']
+        .astype(str)
+        .str.replace('.0', '', regex=False)
+        .str.strip()
+        .str.zfill(5)
+    )
+    para_zip_counts = para_zip_counts[~para_zip_counts.isin(['Unknown', 'nan', 'None', '', '00000'])]
+    para_zip_counts = para_zip_counts.value_counts().reset_index()
+    para_zip_counts.columns = ['zip_code', 'count']
+
+    # --- Clean and aggregate ZIP codes for teachers (match heatmap logic) ---
+    teacher_zip = (
+        df_teacher['Postal']
+        .astype(str)
+        .str.replace('.0', '', regex=False)
+        .str.strip()
+        .str.zfill(5)
+    )
+    teacher_zip = teacher_zip[~teacher_zip.isin(['Unknown', 'nan', 'None', '', '00000'])]
+    teacher_zip_counts = teacher_zip.value_counts().reset_index()
+    teacher_zip_counts.columns = ['zip_code', 'count']
+
+    # Output file path
+    output_file = os.path.join(OUTPUT_DIR, 'nyc_zipcode_choropleth.html')
+
+    # Generate the map
+    create_zipcode_choropleth_map_dual(
+        para_zip_counts,
+        teacher_zip_counts,
+        df_boundaries,
+        output_file,
+        para_col='count',
+        teacher_col='count',
+        zip_col='zip_code',
+        boundary_zip_col='MODZCTA'
+    )
+    print(f"Choropleth map saved to: {output_file}")
 
 def main():
     """
@@ -2083,6 +2370,32 @@ def main():
             print(f"⚠ Borough map generation failed: {str(e)}")
             borough_map_file = None
         
+        # Generate ZIP code heatmaps
+        print("\nGenerating ZIP Code Heatmaps...")
+        try:
+            para_heatmap_file = create_para_zipcode_heatmap(df_para, OUTPUT_DIR)
+            print(f"✓ Paraprofessional heatmap generated: {para_heatmap_file}")
+        except Exception as e:
+            print(f"⚠ Para heatmap generation failed: {str(e)}")
+            para_heatmap_file = None
+            
+        try:
+            teacher_heatmap_file = create_teacher_zipcode_heatmap(df_teacher, OUTPUT_DIR)
+            print(f"✓ Teacher heatmap generated: {teacher_heatmap_file}")
+        except Exception as e:
+            print(f"⚠ Teacher heatmap generation failed: {str(e)}")
+            teacher_heatmap_file = None
+        except Exception as e:
+            print(f"⚠ Teacher heatmap generation failed: {str(e)}")
+            teacher_heatmap_file = None
+        
+        # Generate ZIP code choropleth map
+        print("\nGenerating ZIP Code Choropleth Map...")
+        try:
+            generate_zipcode_choropleth()
+        except Exception as e:
+            print(f"⚠ ZIP Code Choropleth Map generation failed: {str(e)}")
+        
         # Generate HTML report with differences
         print("\nGenerating HTML Report...")
         has_comparison_data = (has_old_para or has_old_teacher)
@@ -2142,36 +2455,57 @@ def main():
         print(f"  • Charts: {', '.join([os.path.basename(f) for f in chart_files])}")
         if borough_map_file:
             print(f"  • Borough Map: {borough_map_file}")
+        if para_heatmap_file:
+            print(f"  • Para ZIP Code Heatmap: {para_heatmap_file}")
+        if teacher_heatmap_file:
+            print(f"  • Teacher ZIP Code Heatmap: {teacher_heatmap_file}")
         
         # Print borough summary
-        print(f"\n🗺️  Borough Distribution Summary:")
+        print(f"\n🗺️  Geographic Distribution Summary:")
         total_para_eligible = sum(borough_data[b]['para_eligible'] for b in borough_data if b != 'Unknown')
         total_teacher_eligible = sum(borough_data[b]['teacher_eligible'] for b in borough_data if b != 'Unknown')
         
+        # NYC Boroughs first
+        print(f"  NYC Boroughs:")
         for borough in ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island']:
             if borough in borough_data:
                 data = borough_data[borough]
                 if data['para_eligible'] > 0 or data['teacher_eligible'] > 0:
-                    print(f"  • {borough}:")
+                    print(f"    • {borough}:")
                     if data['para_eligible'] > 0:
-                        print(f"    - Paras: {data['para_eligible']:,} eligible ({data['para_completion_rate']:.1f}% complete)")
+                        print(f"      - Paras: {data['para_eligible']:,} eligible ({data['para_completion_rate']:.1f}% complete)")
                     if data['teacher_eligible'] > 0:
-                        print(f"    - Teachers: {data['teacher_eligible']:,} eligible ({data['teacher_completion_rate']:.1f}% complete)")
+                        print(f"      - Teachers: {data['teacher_eligible']:,} eligible ({data['teacher_completion_rate']:.1f}% complete)")
+        
+        # Neighboring Counties
+        neighboring_counties = ['Westchester County', 'Nassau County', 'Suffolk County', 
+                               'Bergen County, NJ', 'Hudson County, NJ', 'Union County, NJ', 
+                               'Essex County, NJ', 'Rockland County, NY', 'Fairfield County, CT']
+        
+        counties_with_data = []
+        for county in neighboring_counties:
+            if county in borough_data:
+                data = borough_data[county]
+                if data['para_eligible'] > 0 or data['teacher_eligible'] > 0:
+                    counties_with_data.append(county)
+        
+        if counties_with_data:
+            print(f"  Neighboring Counties:")
+            for county in counties_with_data:
+                data = borough_data[county]
+                print(f"    • {county}:")
+                if data['para_eligible'] > 0:
+                    print(f"      - Paras: {data['para_eligible']:,} eligible ({data['para_completion_rate']:.1f}% complete)")
+                if data['teacher_eligible'] > 0:
+                    print(f"      - Teachers: {data['teacher_eligible']:,} eligible ({data['teacher_completion_rate']:.1f}% complete)")
         
         if borough_data.get('Unknown', {}).get('para_eligible', 0) > 0 or borough_data.get('Unknown', {}).get('teacher_eligible', 0) > 0:
             unknown_data = borough_data['Unknown']
-            print(f"  • Unknown/Other Areas:")
+            print(f"  Unknown/Other Areas:")
             if unknown_data['para_eligible'] > 0:
                 print(f"    - Paras: {unknown_data['para_eligible']:,} eligible ({unknown_data['para_completion_rate']:.1f}% complete)")
             if unknown_data['teacher_eligible'] > 0:
                 print(f"    - Teachers: {unknown_data['teacher_eligible']:,} eligible ({unknown_data['teacher_completion_rate']:.1f}% complete)")
-        
-        print(f"\nOutput Files:")
-        print(f"  • Main Report: {report_file}")
-        print(f"  • Charts Directory: {OUTPUT_DIR}")
-        print(f"  • Charts: {', '.join([os.path.basename(f) for f in chart_files])}")
-        if borough_map_file:
-            print(f"  • Borough Map: {borough_map_file}")
         
         print("\n✓ Analysis completed successfully!")
         

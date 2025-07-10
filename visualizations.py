@@ -208,9 +208,9 @@ def create_nyc_borough_map(borough_data, output_dir):
             font=dict(size=24, color='#2c3e50', family='Arial Black')
         ),
         mapbox=dict(
-            style='carto-positron',  # Clean black and white map style
-            center=dict(lat=40.7589, lon=-73.7004),  # Centered between NYC and surrounding areas
-            zoom=8.5  # Zoomed out to show neighboring counties
+            style='carto-positron',  # Use carto-positron for all maps
+            center=dict(lat=40.7589, lon=-73.7004),
+            zoom=8.5
         ),
         height=800,
         width=1200,
@@ -783,5 +783,117 @@ def create_zipcode_choropleth_map_dual(df_para, df_teacher, df_boundaries, outpu
             ),
         ]
     )
+    pyo.plot(fig, filename=output_file, auto_open=False)
+    return output_file
+
+def create_zipcode_heatmap_dual(df_para, df_teacher, output_dir):
+    """
+    Create a dual ZIP code heatmap for substitute paraprofessional and teacher distribution density with toggle buttons.
+
+    Args:
+        df_para (pd.DataFrame): Paraprofessional data with ZIP codes
+        df_teacher (pd.DataFrame): Teacher data with ZIP codes
+        output_dir (str): Output directory for HTML file
+    Returns:
+        str: Path to generated HTML file
+    """
+    import plotly.graph_objects as go
+    import plotly.offline as pyo
+    import os
+
+    # Helper to process data
+    def process_zip_counts(df, label):
+        zip_counts = {}
+        if df is not None and not df.empty:
+            counts = df['Postal'].value_counts()
+            for zip_code, count in counts.items():
+                clean_zip = str(zip_code).replace('.0', '').strip()
+                if clean_zip not in ['Unknown', 'nan', 'None', '']:
+                    zip_counts[clean_zip] = count
+        lats, lons, counts, zip_codes, hover_texts = [], [], [], [], []
+        for zip_code, count in zip_counts.items():
+            coords = get_zip_coordinates(zip_code)
+            if coords:
+                lats.append(coords['lat'])
+                lons.append(coords['lon'])
+                counts.append(count)
+                zip_codes.append(zip_code)
+                hover_text = f"<b>ZIP Code: {zip_code}</b><br>{label}: {count:,}"
+                hover_texts.append(hover_text)
+        return lats, lons, counts, zip_codes, hover_texts
+
+    # Para data
+    para_lats, para_lons, para_counts, para_zip_codes, para_hover_texts = process_zip_counts(df_para, "Paraprofessionals")
+    # Teacher data
+    teacher_lats, teacher_lons, teacher_counts, teacher_zip_codes, teacher_hover_texts = process_zip_counts(df_teacher, "Teachers")
+
+    max_para = max(para_counts) if para_counts else 1
+    max_teacher = max(teacher_counts) if teacher_counts else 1
+
+    # Create traces
+    trace_para = go.Densitymapbox(
+        lat=para_lats,
+        lon=para_lons,
+        z=para_counts,
+        radius=20,
+        colorscale='Viridis',
+        showscale=True,
+        zmin=0,
+        zmax=max_para,
+        colorbar=dict(title=f"Number of Paraprofessionals<br>(Max: {max_para:,})", x=1.02),
+        text=para_hover_texts,
+        hovertemplate='%{text}<extra></extra>',
+        visible=True,
+        name="Paraprofessionals"
+    )
+    trace_teacher = go.Densitymapbox(
+        lat=teacher_lats,
+        lon=teacher_lons,
+        z=teacher_counts,
+        radius=20,
+        colorscale='Plasma',
+        showscale=True,
+        zmin=0,
+        zmax=max_teacher,
+        colorbar=dict(title=f"Number of Teachers<br>(Max: {max_teacher:,})", x=1.02),
+        text=teacher_hover_texts,
+        hovertemplate='%{text}<extra></extra>',
+        visible=False,
+        name="Teachers"
+    )
+
+    fig = go.Figure(data=[trace_para, trace_teacher])
+    fig.update_layout(
+        mapbox=dict(
+            style='carto-positron',
+            center=dict(lat=40.7128, lon=-73.9060),
+            zoom=9
+        ),
+        height=800,
+        width=1200,
+        title_text="NYC Substitute ZIP Code Heatmap (Toggle)",
+        title=dict(
+            x=0,
+            font=dict(size=20, color='#2c3e50')
+        ),
+        margin=dict(l=0, r=0, t=90, b=0),
+        updatemenus=[
+            dict(
+                buttons=[
+                    dict(args=[{"visible": [True, False]}], label="Paraprofessionals", method="update"),
+                    dict(args=[{"visible": [False, True]}], label="Teachers", method="update")
+                ],
+                direction="left",
+                pad={"r": 0, "t": 0},
+                showactive=True,
+                type="buttons",
+                x=1,
+                xanchor="right",
+                y=1.08,
+                yanchor="top"
+            ),
+        ]
+    )
+    output_file = os.path.join(output_dir, 'nyc_zipcode_heatmap_dual.html')
     pyo.plot(fig, filename=output_file, auto_open=False)
     return output_file

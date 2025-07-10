@@ -437,7 +437,7 @@ def create_visualization_charts(para_results, teacher_results, output_dir):
     
     # Define the status categories and their colors
     status_categories = ['Completed', 'Outstanding - RA Incomplete', 'Outstanding - Days Only', 
-                        'Outstanding - Child Abuse Only', 'Outstanding - ATAS Only', 'Outstanding - Other']
+                        'Outstanding - Child Abuse Only', 'ATAS Only', 'Outstanding - Other']
     colors = ['#28a745', '#dc3545', '#fd7e14', '#ffc107', '#17a2b8', '#6f42c1']
     
     # SPA data breakdown
@@ -449,13 +449,13 @@ def create_visualization_charts(para_results, teacher_results, output_dir):
     spa_other = para_results.get('total_outstanding', 0) - spa_ra_incomplete - spa_days_only - spa_child_abuse_only - spa_atas_only
     spa_other = max(0, spa_other)  # Ensure non-negative
     
-    # STE data breakdown (using PRC/PRU)
+    # STE data breakdown (using PRC/PRU, no ATAS)
     ste_completed = teacher_results.get('total_prc_pru_complete', 0)
     ste_ra_incomplete = teacher_results.get('prc_pru_ra_not_complete', 0)
     ste_days_only = teacher_results.get('prc_pru_days_worked_only', 0)
     ste_child_abuse_only = teacher_results.get('prc_pru_child_abuse_workshop_only', 0)
-    ste_atas_only = teacher_results.get('prc_pru_other_requirements_only', 0)  # Using "other requirements" as ATAS equivalent
-    ste_other = teacher_results.get('total_prc_pru_outstanding', 0) - ste_ra_incomplete - ste_days_only - ste_child_abuse_only - ste_atas_only
+    # Use the metric grid value for 'Other Requirements Only'
+    ste_other = teacher_results.get('prc_pru_other_requirements_only', 0)
     ste_other = max(0, ste_other)  # Ensure non-negative
     
     # Create stacked bar chart
@@ -463,7 +463,8 @@ def create_visualization_charts(para_results, teacher_results, output_dir):
     
     # Add each status category as a separate trace
     spa_values = [spa_completed, spa_ra_incomplete, spa_days_only, spa_child_abuse_only, spa_atas_only, spa_other]
-    ste_values = [ste_completed, ste_ra_incomplete, ste_days_only, ste_child_abuse_only, ste_atas_only, ste_other]
+    # For STE, insert 0 for 'ATAS Only' to align with status_categories
+    ste_values = [ste_completed, ste_ra_incomplete, ste_days_only, ste_child_abuse_only, 0, ste_other]
     
     # Calculate totals for percentage calculations
     spa_total = sum(spa_values)

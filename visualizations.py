@@ -272,7 +272,7 @@ def create_nyc_borough_map(borough_data, output_dir):
             font=dict(size=24, color='#2c3e50', family='Arial Black')
         ),
         mapbox=dict(
-            style='carto-darkmatter',  # Use carto-darkmatter for all maps
+            style='carto-positron',  # Use carto-positron for all maps
             center=dict(lat=40.7589, lon=-73.7004),
             zoom=8.5
         ),
@@ -386,7 +386,7 @@ def create_dual_zipcode_heatmap(df_para, df_teacher, output_file):
             font=dict(size=20, color='#2c3e50')
         ),
         mapbox=dict(
-            style='carto-darkmatter',
+            style='carto-positron',
             center=dict(lat=40.7128, lon=-73.9060),
             zoom=9
         ),
@@ -745,7 +745,7 @@ def create_zipcode_choropleth_map_dual(df_para, df_teacher, df_boundaries, outpu
     # Create figure with both traces, only one visible at a time
     fig = go.Figure(data=[trace_para, trace_teacher])
     fig.update_layout(
-        mapbox_style='carto-darkmatter',
+        mapbox_style='carto-positron',
         mapbox_zoom=9,
         mapbox_center={"lat": 40.7128, "lon": -73.9060},
         height=800,
@@ -872,7 +872,7 @@ def create_zipcode_heatmap_dual(df_para, df_teacher, output_dir):
     fig = go.Figure(data=[trace_para, trace_teacher])
     fig.update_layout(
         mapbox=dict(
-            style='carto-darkmatter',
+            style='carto-positron',
             center=dict(lat=40.7128, lon=-73.9060),
             zoom=9
         ),

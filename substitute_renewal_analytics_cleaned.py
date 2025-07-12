@@ -98,7 +98,6 @@ TEACHER_REQUIREMENTS_COLS = {
     'high_school_diploma': 'High School Diploma'
 }
 
-
 def main():
     """
     Main execution function

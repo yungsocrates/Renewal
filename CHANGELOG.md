@@ -256,10 +256,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced analytics and machine learning insights
 
 ### Refactor
-- Major refactor: Full modularization of codebase.
+- Major refactor: Full modularization of codebase for maintainability, clarity, and ease of extension.
     - All data processing and analysis logic moved to `data_processing.py`.
     - Geographic/borough analysis moved to `geographic_analysis.py`.
     - All chart/map generation moved to `visualizations.py`.
     - HTML report and asset generation moved to `report_generation.py`.
     - Main script (`substitute_renewal_analytics_cleaned.py`) now only contains workflow logic and `main()`.
-- Updated documentation to reflect new modular structure.
+- Modularization benefits:
+    - Each module now has a single, clear responsibility (data processing, geographic analysis, visualization, or reporting).
+    - Easier to test, maintain, and extend each part of the codebase independently.
+    - New features or business rules can be added by updating only the relevant module.
+    - Documentation and onboarding are simpler for new developers.
+- Updated documentation to reflect new modular structure and provide detailed usage and developer notes.

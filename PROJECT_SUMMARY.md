@@ -179,6 +179,38 @@ From your current data analysis:
 - Memory-optimized operations
 - Fast chart generation
 
+# Project Summary
+
+## NYC Public Schools Substitute Renewal Analytics
+
+### Purpose
+This project analyzes substitute teacher and paraprofessional renewal data for NYC Public Schools, generating detailed reports and interactive visualizations.
+
+### Modularization (July 2025)
+The codebase is now fully modularized for clarity and maintainability:
+
+- **substitute_renewal_analytics_cleaned.py**: Main entry point. Handles workflow, data loading, and calls all modularized functions. Contains only the `main()` function and top-level logic.
+- **data_processing.py**: Handles all data loading, cleaning, and core analysis logic. Includes utility functions for formatting and calculations.
+- **geographic_analysis.py**: Performs geographic and borough/county-based analysis, including ZIP-to-borough mapping and aggregation.
+- **visualizations.py**: Generates all charts and maps, including borough maps and ZIP code choropleths.
+- **report_generation.py**: Generates HTML reports and handles branding assets (header/footer/logo).
+
+### Key Features
+- Modular, maintainable codebase
+- Detailed analytics for substitute paraprofessionals and teachers
+- Interactive visualizations and maps
+- Professional HTML report generation
+
+### Usage
+Run the main script:
+```bash
+python substitute_renewal_analytics_cleaned.py
+```
+
+### For Developers
+- Add new analysis or visualizations by extending the appropriate module.
+- Keep the main script focused on workflow and orchestration only.
+
 ## 🎯 Ready for Production
 
 This dashboard is production-ready with:

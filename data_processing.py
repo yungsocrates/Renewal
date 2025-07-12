@@ -76,6 +76,15 @@ def format_percentage(num):
     """Format number as percentage with one decimal place"""
     return f"{num:.1f}%"
 
+def safe_int_conversion(value):
+    """Safely convert values to integer"""
+    try:
+        if pd.isna(value):
+            return 0
+        return int(float(value))
+    except (ValueError, TypeError):
+        return 0
+
 def format_metric_with_diff(current_value, diff_string, show_diff=True):
     """Format metric with optional difference indicator"""
     formatted_current = format_number(current_value)
@@ -179,125 +188,287 @@ def analyze_substitute_paraprofessionals(df_para):
         dict: Analysis results
     """
     results = {}
-
+    
     # Print actual columns and some sample values to help with debugging
-    logger.info("=== RAW DATA DEBUG ===")
-    logger.info(f"Original CSV rows: {len(df_para)}")
+    print(f"=== RAW DATA DEBUG ===")
+    print(f"Original CSV rows: {len(df_para)}")
+    print(f"Available columns: {list(df_para.columns)}")
     
-    if len(df_para) > 0:
-        logger.info(f"All available columns: {list(df_para.columns)}")
-        logger.info(f"Sample of first few rows:")
-        for i, (idx, row) in enumerate(df_para.head(3).iterrows()):
-            logger.info(f"  Row {i+1}: {dict(row)}")
-
-    # Check if required columns exist
-    required_columns = ['Clearance Date', 'TA1', 'TA2', 'CAW1', 'CAW2', 'WSA1']
-    missing_columns = [col for col in required_columns if col not in df_para.columns]
+    # Check for empty/null rows
+    null_status_count = df_para['Status'].isnull().sum()
+    empty_status_count = (df_para['Status'] == '').sum()
+    print(f"Null Status values: {null_status_count}")
+    print(f"Empty Status values: {empty_status_count}")
     
-    if missing_columns:
-        logger.warning(f"Missing required columns for para analysis: {missing_columns}")
-        # Return default values if columns are missing
-        return {
-            'total_eligible': len(df_para),
-            'total_complete': 0,
-            'total_outstanding': len(df_para),
-            'ra_not_complete': 0,
-            'ra_complete_other_outstanding': 0,
+    # Check actual data content
+    print(f"\nSample Status values (including nulls): {df_para['Status'].value_counts(dropna=False)}")
+    print(f"Sample RA values (including nulls): {df_para['Reasonable Assurance'].value_counts(dropna=False)}")
+    
+    # Check for completely empty rows
+    completely_empty_rows = df_para.isnull().all(axis=1).sum()
+    print(f"Completely empty rows: {completely_empty_rows}")
+    
+    # Check rows with meaningful data (non-null Status and at least one other field)
+    meaningful_rows = df_para[df_para['Status'].notna() & (df_para['Status'] != '')].copy()
+    print(f"Rows with non-null, non-empty Status: {len(meaningful_rows)}")
+    
+    # Check for the problematic statuses we want to exclude
+    if 'Staffing Status' in df_para.columns:
+        print(f"Staffing Status values: {df_para['Staffing Status'].value_counts()}")
+        excluded_count = len(df_para[df_para['Staffing Status'].isin(['Pending Termination for FT', 'Active 5BA/5BP'])])
+        print(f"Records to exclude based on Staffing Status: {excluded_count}")
+    else:
+        print("No 'Staffing Status' column found")
+    
+    # Check Status column for exclusions
+    status_excluded_count = len(df_para[df_para['Status'].isin(['Pending Term for FT', 'Pending Termination for FT'])])
+    print(f"Records to exclude based on Status: {status_excluded_count}")
+    print(f"=== END RAW DATA DEBUG ===\n")
+    
+    # For paraprofessionals, we'll work with only meaningful records
+    # First, filter out empty/null status rows and convert to uppercase
+    df_para_clean = df_para.copy()
+    
+    # Remove rows with null, empty, or meaningless Status values
+    df_para_clean = df_para_clean[
+        (df_para_clean['Status'].notna()) & 
+        (df_para_clean['Status'] != '') & 
+        (df_para_clean['Status'].astype(str).str.strip() != '') &
+        (df_para_clean['Status'].astype(str).str.strip().str.upper() != 'NAN')
+    ].copy()
+    
+    print(f"After removing null/empty Status rows: {len(df_para_clean)} records")
+    
+    df_para_clean['Status'] = df_para_clean['Status'].astype(str).str.strip().str.upper()
+    
+    # Filter out terminated or inactive records and specific statuses
+    # Remove "Pending Termination for FT" and "Active 5BA/5BP" if they exist in staffing status
+    if 'Staffing Status' in df_para_clean.columns:
+        excluded_statuses = ['Pending Termination for FT', 'Active 5BA/5BP']
+        active_df = df_para_clean[
+            ~df_para_clean['Staffing Status'].isin(excluded_statuses)
+        ].copy()
+    else:
+        active_df = df_para_clean.copy()
+    
+    # Also exclude specific Status values
+    excluded_status_values = ['Pending Term for FT', 'Pending Termination for FT']
+    active_df = active_df[
+        ~active_df['Status'].str.upper().isin([s.upper() for s in excluded_status_values])
+    ].copy()
+    
+    print(f"After applying all filters: {len(active_df)} records")
+    
+    # Determine completion status based on Status column
+    # Status column: Out = outstanding, COMPL = complete (based on actual data)
+    def get_completion_status(row):
+        """Get completion status from Status column"""
+        status = str(row.get('Status', '')).strip()
+        if status.upper() in ['COMPL', 'COMP', 'COMPLETE']:
+            return 'Complete'
+        elif status.upper() in ['OUT', 'OUTSTANDING']:
+            return 'Outstanding'
+        else:
+            # For any other status, consider it outstanding by default
+            return 'Outstanding'
+    
+    # Apply completion status based on Status column
+    active_df = active_df.copy()
+    active_df['computed_status'] = active_df.apply(get_completion_status, axis=1)
+    
+    # Basic counts - treating all records as eligible for renewal
+    results['total_eligible'] = len(active_df)
+    results['total_complete'] = len(active_df[active_df['computed_status'] == 'Complete'])
+    results['total_outstanding'] = len(active_df[active_df['computed_status'] == 'Outstanding'])
+    
+    print(f"\nBasic counts - Eligible: {results['total_eligible']}, Complete: {results['total_complete']}, Outstanding: {results['total_outstanding']}")
+    
+    # Helper function to check if requirement is complete
+    def is_requirement_complete(value):
+        """Check if a requirement value indicates completion"""
+        if pd.isna(value):
+            return False
+        value_str = str(value).strip().upper()
+        completed_indicators = ['COMPLETE', 'PASSED', 'YES', 'PAID', 'PASSING', 'PASS', 'COMPL', 'Y', 'EXEMPT']
+        return value_str in completed_indicators
+    
+    # Helper function to check if requirement is incomplete/outstanding
+    def is_requirement_outstanding(value):
+        """Check if a requirement value indicates it's outstanding"""
+        if pd.isna(value):
+            return True
+        value_str = str(value).strip().upper()
+        outstanding_indicators = ['NOT COMPLETE', 'NOT REQUIRED', 'REGISTERED', 'NO', 'OUTSTANDING', 'LETTER SENT', 'OUT', 'N']
+        return value_str in outstanding_indicators or value_str == ''
+    
+    # Reasonable Assurance Analysis - based on actual data values
+    ra_not_complete = active_df[
+        (active_df.get('Reasonable Assurance', '').astype(str).str.strip().str.upper() == 'LETTER SENT') |
+        (active_df.get('Reasonable Assurance', '').astype(str).str.strip().str.upper() == 'NOT COMPLETE')
+    ]
+    results['ra_not_complete'] = len(ra_not_complete)
+    
+    # RA Complete group (those who have met RA requirement)
+    # Include both "COMPLETE" and "Letter Not Sent" as complete values
+    ra_complete_group = active_df[
+        active_df.get('Reasonable Assurance', '').astype(str).str.strip().str.upper().isin(['COMPLETE', 'LETTER NOT SENT'])
+    ].copy()
+    
+    outstanding_with_ra_complete = ra_complete_group[ra_complete_group['computed_status'] == 'Outstanding']
+    results['ra_complete_other_outstanding'] = len(outstanding_with_ra_complete)
+    
+    print(f"RA Analysis - RA Not Complete: {results['ra_not_complete']}, RA Complete but Other Outstanding: {results['ra_complete_other_outstanding']}")
+    
+    # Days Worked Analysis
+    if not ra_complete_group.empty:
+        ra_complete_group.loc[:, 'days_worked_int'] = ra_complete_group.get('Days Wrkd in School Year', 0).apply(safe_int_conversion)
+        
+        # Days Worked Only (≤19 days, other requirements met)
+        days_only_candidates = ra_complete_group[
+            (ra_complete_group['days_worked_int'] <= 19) &
+            (ra_complete_group['computed_status'] == 'Outstanding')
+        ]
+        
+        # Check if most other requirements are complete for days-only candidates
+        days_only_with_other_reqs_met = []
+        for _, row in days_only_candidates.iterrows():
+            # Check major requirements (excluding NOT REQUIRED ones)
+            requirements_to_check = [
+                ('Child Abuse Workshop', row.get('Child Abuse Workshop', '')),
+                ('Violence Prevention Workshop', row.get('Violence Prevention Workshop', '')),
+                ('DASA Workshop', row.get('DASA Workshop', '')),
+                ('SubHub Training', row.get('SubHub Training', '')),
+                ('State Exam', row.get('State Exam', '')),
+                ('Autism Workshop', row.get('Autism Workshop', ''))
+            ]
+            
+            # Count requirements that are actually required and complete
+            required_and_complete = 0
+            required_count = 0
+            
+            for req_name, req_value in requirements_to_check:
+                req_str = str(req_value).strip().upper()
+                if req_str != 'NOT REQUIRED':  # Only count actually required items
+                    required_count += 1
+                    if is_requirement_complete(req_value):
+                        required_and_complete += 1
+            
+            # If most required items are complete, this is a "days only" case
+            if required_count > 0 and (required_and_complete / required_count) >= 0.8:
+                days_only_with_other_reqs_met.append(row)
+        
+        results['days_worked_only'] = len(days_only_with_other_reqs_met)
+        
+        # Child Abuse Workshop Only (≥20 days, only Child Abuse Workshop incomplete)
+        child_abuse_only_candidates = ra_complete_group[
+            (ra_complete_group['days_worked_int'] >= 20) &
+            (ra_complete_group['computed_status'] == 'Outstanding')
+        ]
+        
+        child_abuse_only_filtered = []
+        for _, row in child_abuse_only_candidates.iterrows():
+            child_abuse_incomplete = is_requirement_outstanding(row.get('Child Abuse Workshop', ''))
+            
+            # Check if other major requirements are complete
+            other_reqs = [
+                row.get('Violence Prevention Workshop', ''),
+                row.get('DASA Workshop', ''),
+                row.get('SubHub Training', ''),
+                row.get('State Exam', ''),
+                row.get('Autism Workshop', '')
+            ]
+            
+            other_complete_count = sum(1 for req in other_reqs 
+                                     if str(req).strip().upper() != 'NOT REQUIRED' and is_requirement_complete(req))
+            other_required_count = sum(1 for req in other_reqs 
+                                     if str(req).strip().upper() != 'NOT REQUIRED')
+            
+            # If child abuse is incomplete but most others are complete
+            if child_abuse_incomplete and other_required_count > 0 and (other_complete_count / other_required_count) >= 0.8:
+                child_abuse_only_filtered.append(row)
+        
+        results['child_abuse_workshop_only'] = len(child_abuse_only_filtered)
+        
+        # State Exam as ATAS equivalent for paraprofessionals
+        atas_only_candidates = ra_complete_group[
+            (ra_complete_group['days_worked_int'] >= 20) &
+            (ra_complete_group['computed_status'] == 'Outstanding')
+        ]
+        
+        atas_only_filtered = []
+        for _, row in atas_only_candidates.iterrows():
+            state_exam_incomplete = is_requirement_outstanding(row.get('State Exam', ''))
+            
+            # Check if other major requirements are complete
+            other_reqs = [
+                row.get('Child Abuse Workshop', ''),
+                row.get('Violence Prevention Workshop', ''),
+                row.get('DASA Workshop', ''),
+                row.get('SubHub Training', ''),
+                row.get('Autism Workshop', '')
+            ]
+            
+            other_complete_count = sum(1 for req in other_reqs 
+                                     if str(req).strip().upper() != 'NOT REQUIRED' and is_requirement_complete(req))
+            other_required_count = sum(1 for req in other_reqs 
+                                     if str(req).strip().upper() != 'NOT REQUIRED')
+            
+            # If state exam is incomplete but most others are complete
+            if state_exam_incomplete and other_required_count > 0 and (other_complete_count / other_required_count) >= 0.8:
+                atas_only_filtered.append(row)
+        
+        results['atas_only'] = len(atas_only_filtered)
+        
+        # Days & Other Requirements (≤19 days, multiple requirements not complete)
+        days_and_others = ra_complete_group[
+            (ra_complete_group['days_worked_int'] <= 19) &
+            (ra_complete_group['computed_status'] == 'Outstanding')
+        ]
+        
+        # Filter for those with multiple incomplete requirements
+        days_and_multiple_incomplete = []
+        for _, row in days_and_others.iterrows():
+            requirements_to_check = [
+                row.get('Child Abuse Workshop', ''),
+                row.get('Violence Prevention Workshop', ''),
+                row.get('DASA Workshop', ''),
+                row.get('SubHub Training', ''),
+                row.get('State Exam', ''),
+                row.get('Autism Workshop', '')
+            ]
+            
+            incomplete_count = 0
+            required_count = 0
+            
+            for req in requirements_to_check:
+                req_str = str(req).strip().upper()
+                if req_str != 'NOT REQUIRED':  # Only count actually required items
+                    required_count += 1
+                    if is_requirement_outstanding(req):
+                        incomplete_count += 1
+            
+            # If multiple requirements are incomplete
+            if incomplete_count >= 2:
+                days_and_multiple_incomplete.append(row)
+        
+        results['days_and_other_requirements'] = len(days_and_multiple_incomplete)
+    else:
+        results.update({
             'days_worked_only': 0,
             'atas_only': 0,
             'child_abuse_workshop_only': 0,
-            'days_and_other_requirements': 0,
-            'total_suspended_2ss': 0,
-            'total_suspended_2sr': 0
-        }
-
-    # Filter out rows where Clearance Date is not empty (already cleared)
-    total_eligible = len(df_para[df_para['Clearance Date'].isna() | (df_para['Clearance Date'] == '')])
+            'days_and_other_requirements': 0
+        })
     
-    # Filter to only eligible records for detailed analysis
-    df_eligible = df_para[df_para['Clearance Date'].isna() | (df_para['Clearance Date'] == '')]
-    results['total_eligible'] = total_eligible
-
-    logger.info(f"Total Eligible Paraprofessionals: {total_eligible}")
-
-    if total_eligible == 0:
-        logger.info("No eligible paraprofessionals found")
-        return {key: 0 for key in [
-            'total_eligible', 'total_complete', 'total_outstanding', 'ra_not_complete',
-            'ra_complete_other_outstanding', 'days_worked_only', 'atas_only',
-            'child_abuse_workshop_only', 'days_and_other_requirements', 'total_suspended_2ss',
-            'total_suspended_2sr'
-        ]}
-
-    # Create completion status flags
-    df_eligible = df_eligible.copy()
+    print(f"Detailed Analysis - Days Only: {results['days_worked_only']}, Child Abuse Only: {results['child_abuse_workshop_only']}, ATAS Only: {results['atas_only']}, Days & Others: {results['days_and_other_requirements']}")
     
-    # TA1 and TA2 (Teaching Assistant requirements)
-    df_eligible['ta1_complete'] = ~df_eligible['TA1'].isna() & (df_eligible['TA1'] != '')
-    df_eligible['ta2_complete'] = ~df_eligible['TA2'].isna() & (df_eligible['TA2'] != '')
-    df_eligible['atas_complete'] = df_eligible['ta1_complete'] & df_eligible['ta2_complete']
+    # Suspension Analysis - using the same filtered dataset as other calculations
+    results['total_suspended_2ss'] = len(active_df[active_df.get('Suspension Reason Code', '').astype(str).str.strip() == '2SS'])
+    results['total_suspended_2sr'] = len(active_df[active_df.get('Suspension Reason Code', '').astype(str).str.strip() == '2SR'])
     
-    # CAW1 and CAW2 (Child Abuse Workshop)
-    df_eligible['caw1_complete'] = ~df_eligible['CAW1'].isna() & (df_eligible['CAW1'] != '')
-    df_eligible['caw2_complete'] = ~df_eligible['CAW2'].isna() & (df_eligible['CAW2'] != '')
-    df_eligible['child_abuse_complete'] = df_eligible['caw1_complete'] & df_eligible['caw2_complete']
+    print(f"Suspension Analysis - 2SS: {results['total_suspended_2ss']}, 2SR: {results['total_suspended_2sr']}")
+    print(f"Final count verification - Total rows in filtered dataset: {len(active_df)}, Total eligible reported: {results['total_eligible']}")
     
-    # WSA1 (Work Study Agreement or Days Worked)
-    df_eligible['days_worked_complete'] = ~df_eligible['WSA1'].isna() & (df_eligible['WSA1'] != '')
-
-    # Overall completion status
-    df_eligible['all_complete'] = (df_eligible['atas_complete'] & 
-                                   df_eligible['child_abuse_complete'] & 
-                                   df_eligible['days_worked_complete'])
-
-    # Calculate totals
-    results['total_complete'] = int(df_eligible['all_complete'].sum())
-    results['total_outstanding'] = total_eligible - results['total_complete']
-
-    # Detailed breakdown of outstanding requirements
-    outstanding = df_eligible[~df_eligible['all_complete']]
-    
-    # RA (Renewal Application) not complete - missing both TA requirements
-    results['ra_not_complete'] = int((~outstanding['atas_complete']).sum())
-    
-    # RA complete but other requirements outstanding
-    results['ra_complete_other_outstanding'] = int((outstanding['atas_complete']).sum())
-    
-    # Only missing days worked (has TA and CAW)
-    results['days_worked_only'] = int((outstanding['atas_complete'] & 
-                                       outstanding['child_abuse_complete'] & 
-                                       ~outstanding['days_worked_complete']).sum())
-    
-    # Only missing child abuse workshop (has TA and days)
-    results['child_abuse_workshop_only'] = int((outstanding['atas_complete'] & 
-                                                ~outstanding['child_abuse_complete'] & 
-                                                outstanding['days_worked_complete']).sum())
-    
-    # Only missing TA requirements (has CAW and days)
-    results['atas_only'] = int((~outstanding['atas_complete'] & 
-                                outstanding['child_abuse_complete'] & 
-                                outstanding['days_worked_complete']).sum())
-    
-    # Missing days worked and other requirements (has TA)
-    results['days_and_other_requirements'] = int((outstanding['atas_complete'] & 
-                                                  ~outstanding['child_abuse_complete'] & 
-                                                  ~outstanding['days_worked_complete']).sum())
-
-    # Suspended counts (if these columns exist)
-    results['total_suspended_2ss'] = 0
-    results['total_suspended_2sr'] = 0
-    
-    if '2SS' in df_para.columns:
-        results['total_suspended_2ss'] = int((~df_para['2SS'].isna() & (df_para['2SS'] != '')).sum())
-    
-    if '2SR' in df_para.columns:
-        results['total_suspended_2sr'] = int((~df_para['2SR'].isna() & (df_para['2SR'] != '')).sum())
-
-    # Print results for debugging
-    logger.info("=== PARAPROFESSIONAL ANALYSIS RESULTS ===")
-    for key, value in results.items():
-        logger.info(f"{key}: {value}")
-
     return results
 
 def analyze_substitute_teachers(df_teacher):
@@ -311,135 +482,208 @@ def analyze_substitute_teachers(df_teacher):
         dict: Analysis results
     """
     results = {}
-
-    logger.info("=== SUBSTITUTE TEACHER ANALYSIS ===")
-    logger.info(f"Total teacher records: {len(df_teacher)}")
     
-    if len(df_teacher) > 0:
-        logger.info(f"Available columns: {list(df_teacher.columns)}")
-
-    # Check required columns
-    required_columns = ['Clearance Date', 'TA1', 'TA2', 'CAW1', 'CAW2', 'WSA1']
-    missing_columns = [col for col in required_columns if col not in df_teacher.columns]
+    # Print actual columns to help with debugging
+    print(f"Available teacher columns: {list(df_teacher.columns)}")
     
-    if missing_columns:
-        logger.warning(f"Missing required columns for teacher analysis: {missing_columns}")
-        return {
-            'total_eligible': len(df_teacher),
-            'total_prc_pru_eligible': 0,
-            'total_prc_pru_complete': 0,
-            'total_prc_pru_outstanding': len(df_teacher),
-            'prc_pru_ra_not_complete': 0,
-            'prc_pru_met_ra_other_outstanding': 0,
+    # Filter out specific statuses including "Pending Termination for FT" and "Active 5BA/5BP"
+    excluded_statuses = ['Pending Term for FT', 'Pending Termination for FT']
+    df_filtered = df_teacher[~df_teacher.get('Status', '').isin(excluded_statuses)].copy()
+    
+    # Also filter by Staffing Status if column exists
+    if 'Staffing Status' in df_teacher.columns:
+        excluded_staffing_statuses = ['Pending Termination for FT', 'Active 5BA/5BP']
+        df_filtered = df_filtered[~df_filtered.get('Staffing Status', '').isin(excluded_staffing_statuses)].copy()
+    
+    # For teachers, we'll work with all active records
+    eligible_df = df_filtered[df_filtered['Status'].notna()].copy()
+    
+    # Determine completion status based on Status column
+    # Status column: Out = outstanding, COMPL = complete (based on actual data)
+    def get_teacher_completion_status(row):
+        """Get completion status from Status column"""
+        status = str(row.get('Status', '')).strip()
+        if status.upper() in ['COMPL', 'COMP', 'COMPLETE']:
+            return 'Complete'
+        elif status.upper() in ['OUT', 'OUTSTANDING']:
+            return 'Outstanding'
+        else:
+            # For any other status, consider it outstanding by default
+            return 'Outstanding'
+    
+    # Apply completion status based on Status column
+    eligible_df = eligible_df.copy()
+    eligible_df['computed_status'] = eligible_df.apply(get_teacher_completion_status, axis=1)
+    
+    results['total_eligible'] = len(eligible_df)
+    
+    # PRC & PRU Analysis - using Certified column
+    # PRC = Certified column is 'Y' (Yes, certified teachers)
+    # PRU = Certified column is 'N' (No, uncertified teachers)
+    # Exclude special categories like 'Retiree' and 'On Leave' from this analysis
+    prc_teachers = eligible_df[
+        (eligible_df.get('Certified', '') == 'Y') &
+        (~eligible_df.get('Renewal Classification', '').isin(['Retiree', 'On Leave']))
+    ].copy()
+    
+    pru_teachers = eligible_df[
+        (eligible_df.get('Certified', '') == 'N') &
+        (~eligible_df.get('Renewal Classification', '').isin(['Retiree', 'On Leave']))
+    ].copy()
+    
+    prc_pru_eligible = pd.concat([prc_teachers, pru_teachers], ignore_index=True)
+    
+    results['total_prc_pru_eligible'] = len(prc_pru_eligible)
+    results['total_prc_pru_complete'] = len(
+        prc_pru_eligible[prc_pru_eligible['computed_status'] == 'Complete']
+    )
+    results['total_prc_pru_outstanding'] = len(
+        prc_pru_eligible[prc_pru_eligible['computed_status'] == 'Outstanding']
+    )
+    
+    # PRC & PRU - RA Analysis
+    prc_pru_ra_not_complete = prc_pru_eligible[
+        (prc_pru_eligible.get('Reasonable Assurance', '').astype(str).str.contains('Letter Sent', na=False)) |
+        (prc_pru_eligible.get('Reasonable Assurance', '').astype(str).str.strip().str.upper() == 'NOT COMPLETE')
+    ]
+    results['prc_pru_ra_not_complete'] = len(prc_pru_ra_not_complete)
+    
+    # PRC & PRU - Met RA, Other Requirements Outstanding
+    prc_pru_ra_complete = prc_pru_eligible[
+        prc_pru_eligible.get('Reasonable Assurance', '').isin(['COMPLETE', 'Letter Not Sent', 'PASSED'])
+    ].copy()
+    results['prc_pru_met_ra_other_outstanding'] = len(
+        prc_pru_ra_complete[prc_pru_ra_complete['computed_status'] == 'Outstanding']
+    )
+    
+    # Days and requirements analysis for PRC & PRU
+    if not prc_pru_ra_complete.empty:
+        prc_pru_ra_complete.loc[:, 'days_worked_int'] = prc_pru_ra_complete.get('Days Wrkd in School Year', 0).apply(safe_int_conversion)
+        
+        # Days Worked Only (≤19 days, other requirements passing)
+        days_only = prc_pru_ra_complete[
+            (prc_pru_ra_complete['days_worked_int'] <= 19) &
+            (prc_pru_ra_complete['computed_status'] == 'Outstanding')
+        ]
+        
+        # Check if other requirements are mostly complete
+        days_only_filtered = []
+        for _, row in days_only.iterrows():
+            other_reqs = [
+                row.get('Child Abuse Workshop', ''),
+                row.get('Violence Prevention Workshop', ''),
+                row.get('DASA Workshop', ''),
+                row.get('SubHub Training', ''),
+                row.get('TEACH Profile', ''),
+                row.get('Bachelor Degree', ''),
+                row.get('Autism Workshop', '')
+            ]
+            
+            # Count actually required and completed items
+            completed_count = 0
+            required_count = 0
+            
+            for req in other_reqs:
+                req_str = str(req).strip().upper()
+                if req_str not in ['NOT REQUIRED', 'NAN', '']:  # Only count actually required items
+                    required_count += 1
+                    if req_str in ['COMPLETE', 'PASSED', 'EXEMPT', 'Y']:
+                        completed_count += 1
+            
+            # If most requirements are complete (80% or more)
+            if required_count > 0 and (completed_count / required_count) >= 0.8:
+                days_only_filtered.append(row)
+        
+        results['prc_pru_days_worked_only'] = len(days_only_filtered)
+        
+        # Child Abuse Workshop Only (≥20 days, Child Abuse Workshop not complete)
+        child_abuse_only = prc_pru_ra_complete[
+            (prc_pru_ra_complete['days_worked_int'] >= 20) &
+            (prc_pru_ra_complete.get('Child Abuse Workshop', '').astype(str).str.strip().str.upper() == 'NOT COMPLETE') &
+            (prc_pru_ra_complete['computed_status'] == 'Outstanding')
+        ]
+        results['prc_pru_child_abuse_workshop_only'] = len(child_abuse_only)
+        
+        # Other Requirements Only (≥20 days, other requirements not complete)
+        other_requirements_only = prc_pru_ra_complete[
+            (prc_pru_ra_complete['days_worked_int'] >= 20) &
+            (prc_pru_ra_complete['computed_status'] == 'Outstanding')
+        ]
+        
+        # Filter for those with other incomplete requirements (not just Autism)
+        other_only_filtered = []
+        for _, row in other_requirements_only.iterrows():
+            autism_complete = str(row.get('Autism Workshop', '')).strip().upper() == 'COMPLETE'
+            
+            if autism_complete:  # Autism is complete, check others
+                other_reqs = [
+                    row.get('Child Abuse Workshop', ''),
+                    row.get('Violence Prevention Workshop', ''),
+                    row.get('DASA Workshop', ''),
+                    row.get('SubHub Training', ''),
+                    row.get('TEACH Profile', ''),
+                    row.get('Bachelor Degree', '')
+                ]
+                
+                incomplete_count = 0
+                for req in other_reqs:
+                    req_str = str(req).strip().upper()
+                    if req_str not in ['COMPLETE', 'PASSED', 'EXEMPT', 'Y', 'NOT REQUIRED', 'NAN', '']:
+                        incomplete_count += 1
+                
+                if incomplete_count >= 1:
+                    other_only_filtered.append(row)
+        
+        results['prc_pru_other_requirements_only'] = len(other_only_filtered)
+        
+        # Days & Other Requirements (≤19 days, multiple requirements not complete)
+        days_and_others = prc_pru_ra_complete[
+            (prc_pru_ra_complete['days_worked_int'] <= 19) &
+            (prc_pru_ra_complete['computed_status'] == 'Outstanding')
+        ]
+        
+        days_and_others_filtered = []
+        for _, row in days_and_others.iterrows():
+            incomplete_reqs = [
+                row.get('Child Abuse Workshop', ''),
+                row.get('Violence Prevention Workshop', ''),
+                row.get('DASA Workshop', ''),
+                row.get('SubHub Training', ''),
+                row.get('Autism Workshop', ''),
+                row.get('TEACH Profile', ''),
+                row.get('Bachelor Degree', '')
+            ]
+            
+            incomplete_count = 0
+            for req in incomplete_reqs:
+                req_str = str(req).strip().upper()
+                if req_str not in ['COMPLETE', 'PASSED', 'EXEMPT', 'Y', 'NOT REQUIRED', 'NAN', '']:
+                    incomplete_count += 1
+            
+            if incomplete_count >= 2:
+                days_and_others_filtered.append(row)
+        
+        results['prc_pru_days_and_other_requirements'] = len(days_and_others_filtered)
+    else:
+        results.update({
             'prc_pru_days_worked_only': 0,
             'prc_pru_child_abuse_workshop_only': 0,
             'prc_pru_other_requirements_only': 0,
-            'prc_pru_days_and_other_requirements': 0,
-            'total_teachers_on_leave': 0,
-            'total_retirees': 0,
-            'total_prr_complete': 0,
-            'total_prr_outstanding': 0,
-            'total_suspended_2ss': 0,
-            'total_suspended_2sr': 0
-        }
-
-    # Total eligible (not yet cleared)
-    total_eligible = len(df_teacher[df_teacher['Clearance Date'].isna() | (df_teacher['Clearance Date'] == '')])
-    results['total_eligible'] = total_eligible
-
-    # For teachers, we need to distinguish between PRC/PRU eligible and other categories
-    df_eligible = df_teacher[df_teacher['Clearance Date'].isna() | (df_teacher['Clearance Date'] == '')]
+            'prc_pru_days_and_other_requirements': 0
+        })
     
-    # PRC/PRU eligible (assuming this is a subset - you may need to adjust the filter)
-    df_prc_pru = df_eligible.copy()  # For now, assume all eligible are PRC/PRU
-    results['total_prc_pru_eligible'] = len(df_prc_pru)
-
-    logger.info(f"Total Eligible Teachers: {total_eligible}")
-    logger.info(f"PRC/PRU Eligible Teachers: {results['total_prc_pru_eligible']}")
-
-    if len(df_prc_pru) == 0:
-        logger.info("No PRC/PRU eligible teachers found")
-        return {key: 0 for key in [
-            'total_eligible', 'total_prc_pru_eligible', 'total_prc_pru_complete',
-            'total_prc_pru_outstanding', 'prc_pru_ra_not_complete', 'prc_pru_met_ra_other_outstanding',
-            'prc_pru_days_worked_only', 'prc_pru_child_abuse_workshop_only', 'prc_pru_other_requirements_only',
-            'prc_pru_days_and_other_requirements', 'total_teachers_on_leave', 'total_retirees',
-            'total_prr_complete', 'total_prr_outstanding', 'total_suspended_2ss', 'total_suspended_2sr'
-        ]}
-
-    # Create completion status flags
-    df_prc_pru = df_prc_pru.copy()
+    # For Teachers On Leave and Retirees, we can use the Renewal Classification column
+    # Based on actual data: 'Retiree', 'On Leave'
+    teachers_on_leave = eligible_df[eligible_df.get('Renewal Classification', '') == 'On Leave']
+    retirees = eligible_df[eligible_df.get('Renewal Classification', '') == 'Retiree']
     
-    # TA1 and TA2 (Teaching Assistant requirements / Renewal Application)
-    df_prc_pru['ta1_complete'] = ~df_prc_pru['TA1'].isna() & (df_prc_pru['TA1'] != '')
-    df_prc_pru['ta2_complete'] = ~df_prc_pru['TA2'].isna() & (df_prc_pru['TA2'] != '')
-    df_prc_pru['ra_complete'] = df_prc_pru['ta1_complete'] & df_prc_pru['ta2_complete']
+    results['total_teachers_on_leave'] = len(teachers_on_leave)
+    results['total_retirees'] = len(retirees)
+    results['total_prr_complete'] = len(retirees[retirees['computed_status'] == 'Complete'])
+    results['total_prr_outstanding'] = len(retirees[retirees['computed_status'] == 'Outstanding'])
     
-    # CAW1 and CAW2 (Child Abuse Workshop)
-    df_prc_pru['caw1_complete'] = ~df_prc_pru['CAW1'].isna() & (df_prc_pru['CAW1'] != '')
-    df_prc_pru['caw2_complete'] = ~df_prc_pru['CAW2'].isna() & (df_prc_pru['CAW2'] != '')
-    df_prc_pru['child_abuse_complete'] = df_prc_pru['caw1_complete'] & df_prc_pru['caw2_complete']
+    # Suspension Analysis
+    results['total_suspended_2ss'] = len(df_filtered[df_filtered.get('Suspension Reason Code', '') == '2SS'])
+    results['total_suspended_2sr'] = len(df_filtered[df_filtered.get('Suspension Reason Code', '') == '2SR'])
     
-    # WSA1 (Work Study Agreement or Days Worked)
-    df_prc_pru['days_worked_complete'] = ~df_prc_pru['WSA1'].isna() & (df_prc_pru['WSA1'] != '')
-
-    # Overall PRC/PRU completion status
-    df_prc_pru['prc_pru_complete'] = (df_prc_pru['ra_complete'] & 
-                                      df_prc_pru['child_abuse_complete'] & 
-                                      df_prc_pru['days_worked_complete'])
-
-    # Calculate PRC/PRU totals
-    results['total_prc_pru_complete'] = int(df_prc_pru['prc_pru_complete'].sum())
-    results['total_prc_pru_outstanding'] = len(df_prc_pru) - results['total_prc_pru_complete']
-
-    # Detailed breakdown of outstanding PRC/PRU requirements
-    outstanding = df_prc_pru[~df_prc_pru['prc_pru_complete']]
-    
-    # RA not complete
-    results['prc_pru_ra_not_complete'] = int((~outstanding['ra_complete']).sum())
-    
-    # Met RA but other requirements outstanding
-    results['prc_pru_met_ra_other_outstanding'] = int((outstanding['ra_complete']).sum())
-    
-    # Only missing days worked (has RA and CAW)
-    results['prc_pru_days_worked_only'] = int((outstanding['ra_complete'] & 
-                                               outstanding['child_abuse_complete'] & 
-                                               ~outstanding['days_worked_complete']).sum())
-    
-    # Only missing child abuse workshop (has RA and days)
-    results['prc_pru_child_abuse_workshop_only'] = int((outstanding['ra_complete'] & 
-                                                        ~outstanding['child_abuse_complete'] & 
-                                                        outstanding['days_worked_complete']).sum())
-    
-    # Only missing other requirements (has RA but missing CAW and days)
-    results['prc_pru_other_requirements_only'] = int((outstanding['ra_complete'] & 
-                                                      ~outstanding['child_abuse_complete'] & 
-                                                      ~outstanding['days_worked_complete']).sum())
-    
-    # Missing days worked and other requirements
-    results['prc_pru_days_and_other_requirements'] = int((outstanding['ra_complete'] & 
-                                                          ~outstanding['child_abuse_complete'] & 
-                                                          ~outstanding['days_worked_complete']).sum())
-
-    # Special teacher categories (these may need different column mappings)
-    results['total_teachers_on_leave'] = 0  # Add logic if this data is available
-    results['total_retirees'] = 0  # Add logic if this data is available
-    results['total_prr_complete'] = 0  # Add logic for PRR (different from PRC/PRU)
-    results['total_prr_outstanding'] = 0  # Add logic for PRR outstanding
-
-    # Suspended counts
-    results['total_suspended_2ss'] = 0
-    results['total_suspended_2sr'] = 0
-    
-    if '2SS' in df_teacher.columns:
-        results['total_suspended_2ss'] = int((~df_teacher['2SS'].isna() & (df_teacher['2SS'] != '')).sum())
-    
-    if '2SR' in df_teacher.columns:
-        results['total_suspended_2sr'] = int((~df_teacher['2SR'].isna() & (df_teacher['2SR'] != '')).sum())
-
-    # Print results for debugging
-    logger.info("=== TEACHER ANALYSIS RESULTS ===")
-    for key, value in results.items():
-        logger.info(f"{key}: {value}")
-
     return results

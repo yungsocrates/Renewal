@@ -254,3 +254,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Real-time dashboard updates
 - Mobile app companion
 - Advanced analytics and machine learning insights
+
+### Refactor
+- Major refactor: Full modularization of codebase.
+    - All data processing and analysis logic moved to `data_processing.py`.
+    - Geographic/borough analysis moved to `geographic_analysis.py`.
+    - All chart/map generation moved to `visualizations.py`.
+    - HTML report and asset generation moved to `report_generation.py`.
+    - Main script (`substitute_renewal_analytics_cleaned.py`) now only contains workflow logic and `main()`.
+- Updated documentation to reflect new modular structure.

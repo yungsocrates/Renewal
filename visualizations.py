@@ -799,3 +799,145 @@ def create_teacher_zipcode_heatmap(df_teacher, output_dir):
     Deprecated: Use create_dual_zipcode_heatmap instead.
     """
     raise NotImplementedError("Use create_dual_zipcode_heatmap for dual heatmap functionality.")
+
+def generate_zipcode_choropleth(RENEWAL_WORKSPACE, OUTPUT_DIR, create_zipcode_choropleth_map_dual, create_dual_zipcode_heatmap):
+    """
+    Generate choropleth maps for NYC ZIP codes with substitute data overlay.
+    Creates both separate and combined choropleth maps.
+    """
+    import pandas as pd
+    import os
+    # Load boundary data
+    boundary_csv = os.path.join(RENEWAL_WORKSPACE, 'Modified_Zip_Code_Tabulation_Areas__MODZCTA__20250709.csv')
+    df_boundaries = pd.read_csv(boundary_csv)
+
+    # Load para and teacher data
+    para_csv = os.path.join(RENEWAL_WORKSPACE, 'substitute_paraprofessionals.csv')
+    teacher_csv = os.path.join(RENEWAL_WORKSPACE, 'substitute_teachers.csv')
+    df_para = pd.read_csv(para_csv)
+    df_teacher = pd.read_csv(teacher_csv)
+
+    # --- Clean and aggregate ZIP codes for paras ---
+    para_zip_counts = (
+        df_para['Postal']
+        .astype(str)
+        .str.replace('.0', '', regex=False)
+        .str.strip()
+        .str.zfill(5)
+    )
+    para_zip_counts = para_zip_counts[~para_zip_counts.isin(['Unknown', 'nan', 'None', '', '00000'])]
+    para_zip_counts = para_zip_counts.value_counts().reset_index()
+    para_zip_counts.columns = ['zip_code', 'count']
+
+    # --- Clean and aggregate ZIP codes for teachers (match heatmap logic) ---
+    teacher_zip = (
+        df_teacher['Postal']
+        .astype(str)
+        .str.replace('.0', '', regex=False)
+        .str.strip()
+        .str.zfill(5)
+    )
+    teacher_zip = teacher_zip[~teacher_zip.isin(['Unknown', 'nan', 'None', '', '00000'])]
+    teacher_zip_counts = teacher_zip.value_counts().reset_index()
+    teacher_zip_counts.columns = ['zip_code', 'count']
+
+    # Output file path
+    output_file = os.path.join(OUTPUT_DIR, 'nyc_zipcode_choropleth.html')
+
+    # Generate the map
+    create_zipcode_choropleth_map_dual(
+        para_zip_counts,
+        teacher_zip_counts,
+        df_boundaries,
+        output_file,
+        para_col='count',
+        teacher_col='count',
+        zip_col='zip_code',
+        boundary_zip_col='MODZCTA'
+    )
+    print(f"Choropleth map saved to: {output_file}")
+
+    # Generate ZIP code density heatmap (dual)
+    output_heatmap_file = os.path.join(OUTPUT_DIR, 'nyc_zipcode_density_heatmap.html')
+    create_dual_zipcode_heatmap(
+        df_para,
+        df_teacher,
+        output_heatmap_file
+    )
+    print(f"Density heatmap saved to: {output_heatmap_file}")
+
+def generate_zipcode_choropleth():
+    """
+    Generate choropleth maps for NYC ZIP codes with substitute data overlay.
+    Creates both separate and combined choropleth maps.
+    """
+    import os
+    import pandas as pd
+    import plotly.express as px
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    import geopandas as gpd
+    from shapely.geometry import Point
+    
+    # Set up paths
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    renewal_workspace = current_dir
+    output_dir = os.path.join(current_dir, 'renewal_reports')
+    
+    # Load current data
+    para_csv_path = os.path.join(renewal_workspace, "substitute_paraprofessionals.csv")
+    teacher_csv_path = os.path.join(renewal_workspace, "substitute_teachers.csv")
+    
+    # Load ZIP code boundary data
+    zip_boundary_path = os.path.join(renewal_workspace, "Modified_Zip_Code_Tabulation_Areas__MODZCTA__20250709.csv")
+    
+    if not os.path.exists(zip_boundary_path):
+        print(f"ZIP boundary data not found at {zip_boundary_path}")
+        return
+    
+    # Load the data
+    df_para = None
+    df_teacher = None
+    
+    if os.path.exists(para_csv_path):
+        df_para = pd.read_csv(para_csv_path)
+        df_para['Postal'] = df_para['Postal'].astype(str)
+        # Count by ZIP code
+        para_zip_counts = df_para['Postal'].value_counts().reset_index()
+        para_zip_counts.columns = ['zip_code', 'count']
+        print(f"Loaded {len(df_para)} paraprofessional records")
+    
+    if os.path.exists(teacher_csv_path):
+        df_teacher = pd.read_csv(teacher_csv_path)
+        df_teacher['Postal'] = df_teacher['Postal'].astype(str)
+        # Count by ZIP code
+        teacher_zip_counts = df_teacher['Postal'].value_counts().reset_index()
+        teacher_zip_counts.columns = ['zip_code', 'count']
+        print(f"Loaded {len(df_teacher)} teacher records")
+    
+    # Load ZIP boundary data
+    zip_boundaries = pd.read_csv(zip_boundary_path)
+    print(f"Loaded {len(zip_boundaries)} ZIP code boundaries")
+    
+    # Generate choropleth map
+    output_file = os.path.join(output_dir, 'nyc_zipcode_choropleth.html')
+    create_zipcode_choropleth_map(
+        para_zip_counts if df_para is not None else pd.DataFrame(columns=['zip_code', 'count']),
+        teacher_zip_counts if df_teacher is not None else pd.DataFrame(columns=['zip_code', 'count']),
+        zip_boundaries,
+        output_file,
+        para_col='count',
+        teacher_col='count',
+        zip_col='zip_code',
+        boundary_zip_col='MODZCTA'
+    )
+    print(f"Choropleth map saved to: {output_file}")
+
+    # Generate ZIP code density heatmap (dual)
+    output_heatmap_file = os.path.join(output_dir, 'nyc_zipcode_density_heatmap.html')
+    create_dual_zipcode_heatmap(
+        df_para,
+        df_teacher,
+        output_heatmap_file
+    )
+    print(f"Density heatmap saved to: {output_heatmap_file}")

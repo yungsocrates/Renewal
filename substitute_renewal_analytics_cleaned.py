@@ -160,11 +160,14 @@ def main():
             
             # Add Borough column based on ZIP code mapping
             df_para['Borough'] = df_para['Postal'].apply(map_zip_to_borough)
-            
+
+            unknowns = df_para[df_para['Borough'] == 'Unknown']
+
             # Debug borough mapping
             borough_counts = df_para['Borough'].value_counts()
             print(f"  Borough distribution: {borough_counts.to_dict()}")
-            
+            print(f"  Unknown Boroughs: {unknowns['Postal'].tolist()}")
+
             print(f"✓ Added Borough mapping to {len(df_para)} paraprofessional records")
             para_results = analyze_substitute_paraprofessionals(df_para)
             print("✓ Current paraprofessional analysis completed")
@@ -205,10 +208,13 @@ def main():
             # Add Borough column based on ZIP code mapping
             df_teacher['Borough'] = df_teacher['Postal'].apply(map_zip_to_borough)
             
+            unknowns = df_teacher[df_teacher['Borough'] == 'Unknown']
+
             # Debug borough mapping
             borough_counts = df_teacher['Borough'].value_counts()
             print(f"  Borough distribution: {borough_counts.to_dict()}")
-            
+            print(f"  Unknown Boroughs: {unknowns['Postal'].tolist()}")
+
             print(f"✓ Added Borough mapping to {len(df_teacher)} teacher records")
             teacher_results = analyze_substitute_teachers(df_teacher)
             print("✓ Current teacher analysis completed")

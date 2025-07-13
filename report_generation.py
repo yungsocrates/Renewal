@@ -347,7 +347,7 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
             <div class="section">
             <h2>Executive Summary</h2>
             <div class="summary-box">
-                <h3>Key Performance Indicators</h3>
+                <h3>Key Renewal Metrics</h3>
                 <div class="metrics-grid">
                     <div class="metric-card">
                         <div class="metric-value">{format_metric_with_diff(para_results.get('total_eligible', 0), para_differences.get('total_eligible', '0'), has_comparison)}</div>
@@ -523,7 +523,7 @@ def generate_html_report(para_results, teacher_results, para_differences, teache
             <div class="chart-container">
                 <h3>Geographic Distribution by Borough & County</h3>
                 <p style="color: #666; text-align: center; margin-bottom: 20px;">
-                    Interactive map showing substitute distribution and renewal completion rates across NYC boroughs and neighboring counties (Westchester, Nassau, Suffolk, Bergen, Hudson, Union, Essex, Rockland, Fairfield)
+                    Interactive map showing substitute distribution and renewal completion rates across NYC boroughs and neighboring counties (Westchester, Nassau, Suffolk, Bergen, Hudson, Union, Essex, Rockland, Fairfield, Orange, Putnam, Dutchess, Ulster, Morris, Passaic, Somerset, Middlesex, Monmouth, Ocean, New Haven, Pennsylvania)
                 </p>
                 <iframe src="nyc_borough_map.html" width="1250" height="850" frameborder="0"></iframe>
             </div>

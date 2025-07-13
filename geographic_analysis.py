@@ -38,6 +38,9 @@ def map_zip_to_borough(postal_code):
     if len(postal_str) == 4 and postal_str.isdigit():
         postal_str = '0' + postal_str
     
+    if len(postal_str) > 5:
+        postal_str = postal_str[:5]
+    
     # Only process if it's a valid 5-digit number
     if not (postal_str.isdigit() and len(postal_str) == 5):
         return 'Unknown'
@@ -58,11 +61,18 @@ def analyze_substitute_data_by_borough(df_para, df_teacher):
     borough_data = {}
     
     # Initialize borough data structure
-    boroughs = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island', 
-                'Westchester County', 'Nassau County', 'Suffolk County', 
-                'Bergen County, NJ', 'Hudson County, NJ', 'Union County, NJ', 
-                'Essex County, NJ', 'Rockland County, NY', 'Fairfield County, CT', 
-                'Unknown']
+    boroughs = [
+        'Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island',
+        'Westchester County', 'Nassau County', 'Suffolk County',
+        'Bergen County, NJ', 'Hudson County, NJ', 'Union County, NJ',
+        'Essex County, NJ', 'Rockland County, NY', 'Fairfield County, CT',
+        # Newly added counties/regions
+        'Orange County, NY', 'Putnam County, NY', 'Dutchess County, NY', 'Ulster County, NY',
+        'Morris County, NJ', 'Passaic County, NJ', 'Somerset County, NJ', 'Middlesex County, NJ',
+        'Monmouth County, NJ', 'Ocean County, NJ', 'New Haven County, CT',
+        'Pennsylvania',
+        'Unknown'
+    ]
     
     for borough in boroughs:
         borough_data[borough] = {

@@ -62,6 +62,9 @@ nassau_zips = [
     "11579", "11580", "11581", "11582", "11590", "11592", "11593", "11594", 
     "11595", "11596", "11597", "11598", "11599"
 ]
+# Add missing Nassau ZIPs from Unknown Boroughs
+for zip_code in ["11791", "11793"]:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Nassau County'
 for zip_code in nassau_zips:
     NYC_ZIP_TO_BOROUGH[zip_code] = 'Nassau County'
 
@@ -84,6 +87,9 @@ suffolk_zips = [
     "11963", "11964", "11965", "11967", "11968", "11969", "11970", "11971", 
     "11972", "11973", "11975", "11976", "11977", "11978", "11980"
 ]
+# Add missing Suffolk ZIPs from Unknown Boroughs
+for zip_code in ["11775"]:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Suffolk County'
 for zip_code in suffolk_zips:
     NYC_ZIP_TO_BOROUGH[zip_code] = 'Suffolk County'
 
@@ -100,6 +106,9 @@ bergen_zips = [
     "07654", "07656", "07657", "07660", "07661", "07662", "07663", "07666", 
     "07670", "07675", "07676", "07677"
 ]
+# Add missing Bergen ZIPs from Unknown Boroughs
+for zip_code in ["07407", "07480"]:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Bergen County, NJ'
 for zip_code in bergen_zips:
     NYC_ZIP_TO_BOROUGH[zip_code] = 'Bergen County, NJ'
 
@@ -108,6 +117,9 @@ hudson_zips = [
     "07030", "07086", "07087", "07093", "07097", "07201", "07302", "07303", 
     "07304", "07305", "07306", "07307", "07308", "07310", "07311", "07399"
 ]
+# Add missing Hudson ZIPs from Unknown Boroughs
+for zip_code in ["07002"]:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Hudson County, NJ'
 for zip_code in hudson_zips:
     NYC_ZIP_TO_BOROUGH[zip_code] = 'Hudson County, NJ'
 
@@ -118,6 +130,9 @@ union_zips = [
     "07090", "07091", "07092", "07095", "07201", "07202", "07203", "07204", 
     "07206", "07208", "07922", "07923", "07924", "07933", "07974", "07980"
 ]
+# Add missing Union ZIPs from Unknown Boroughs
+for zip_code in ["07040", "07039", "07083", "07088", "07090", "07091", "07092", "07095"]:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Union County, NJ'
 for zip_code in union_zips:
     NYC_ZIP_TO_BOROUGH[zip_code] = 'Union County, NJ'
 
@@ -130,6 +145,9 @@ essex_zips = [
     "07199", "07936", "07940", "07950", "07960", "07961", "07962", "07963", 
     "07970", "07976", "07977", "07978", "07979", "07981", "07999"
 ]
+# Add missing Essex ZIPs from Unknown Boroughs
+for zip_code in ["07040"]:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Essex County, NJ'
 for zip_code in essex_zips:
     NYC_ZIP_TO_BOROUGH[zip_code] = 'Essex County, NJ'
 
@@ -141,6 +159,9 @@ rockland_zips = [
     "10976", "10977", "10980", "10982", "10983", "10984", "10986", "10987", 
     "10989", "10993", "10994", "10996", "10997", "10998"
 ]
+# Add missing Rockland ZIPs from Unknown Boroughs
+for zip_code in ["10964"]:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Rockland County, NY'
 for zip_code in rockland_zips:
     NYC_ZIP_TO_BOROUGH[zip_code] = 'Rockland County, NY'
 
@@ -158,6 +179,100 @@ fairfield_zips = [
 ]
 for zip_code in fairfield_zips:
     NYC_ZIP_TO_BOROUGH[zip_code] = 'Fairfield County, CT'
+
+# --- Additional NY Counties ---
+# Orange County, NY
+orange_zips = [
+    "10918", "10950", "10917", "10990", "10992", "10940", "10941", "10924", "10921", "10919", "10916", "10958", "10969", "10973", "10979", "10985", "10987", "10988", "10989", "10993", "10996", "10998", "12518", "12549", "12550", "12553", "12566", "12575", "12577", "12729", "12746", "12771", "12780", "12785"
+]
+for zip_code in orange_zips:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Orange County, NY'
+
+# Putnam County, NY
+putnam_zips = [
+    "10512", "10516", "10524", "10537", "10541", "10542", "10579", "10588", "10509", "10526", "10535", "10560"
+]
+for zip_code in putnam_zips:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Putnam County, NY'
+
+# Dutchess County, NY
+# (Partial, add more as needed)
+dutchess_zips = [
+    "12514", "12524", "12533", "12540", "12561", "12564", "12567", "12569", "12582", "12590", "12601", "12603"
+]
+for zip_code in dutchess_zips:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Dutchess County, NY'
+
+# Ulster County, NY
+ulster_zips = [
+    "12401", "12428", "12440", "12449", "12453", "12477", "12483"
+]
+for zip_code in ulster_zips:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Ulster County, NY'
+
+# --- Additional NJ Counties ---
+# Morris County, NJ
+morris_zips = [
+    "07005", "07034", "07035", "07045", "07046", "07054", "07058", "07082", "07405", "07438", "07440", "07444", "07801", "07803", "07806", "07834", "07836", "07840", "07842", "07847", "07849", "07850", "07852", "07856", "07857", "07866", "07869", "07876", "07878", "07885"
+]
+for zip_code in morris_zips:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Morris County, NJ'
+
+# Passaic County, NJ
+passaic_zips = [
+    "07011", "07012", "07013", "07014", "07015", "07055", "07424", "07442", "07470", "07501", "07502", "07503", "07504", "07505", "07506", "07508", "07512", "07513", "07514", "07522"
+]
+for zip_code in passaic_zips:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Passaic County, NJ'
+
+# Somerset County, NJ
+somerset_zips = [
+    "07059", "07060", "07069", "07920", "07921", "07924", "07931", "07933", "07934", "07938", "07939", "07940", "07946", "07977", "08805", "08807", "08812", "08823", "08835", "08836", "08844", "08853", "08869", "08873", "08876", "08880", "08890"
+]
+for zip_code in somerset_zips:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Somerset County, NJ'
+
+# Middlesex County, NJ
+middlesex_zips = [
+    "07001", "07008", "07080", "07095", "08810", "08812", "08816", "08817", "08820", "08824", "08828", "08830", "08832", "08837", "08840", "08846", "08850", "08854", "08857", "08859", "08861", "08863", "08872", "08879", "08882", "08884", "08899"
+]
+for zip_code in middlesex_zips:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Middlesex County, NJ'
+
+# Monmouth County, NJ
+monmouth_zips = [
+    "07701", "07702", "07703", "07704", "07711", "07712", "07716", "07717", "07718", "07719", "07720", "07721", "07722", "07723", "07724", "07726", "07727", "07728", "07730", "07731", "07732", "07733", "07734", "07735", "07737", "07738", "07739", "07740", "07746", "07747", "07748", "07750", "07751", "07753", "07755", "07756", "07757", "07758", "07760", "07762", "07763", "07764", "07765"
+]
+for zip_code in monmouth_zips:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Monmouth County, NJ'
+
+# Ocean County, NJ
+ocean_zips = [
+    "08701", "08720", "08721", "08722", "08723", "08724", "08731", "08732", "08733", "08734", "08735", "08736", "08738", "08739", "08740", "08741", "08742", "08750", "08751", "08752", "08753", "08754", "08755", "08756", "08757", "08758", "08759"
+]
+for zip_code in ocean_zips:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Ocean County, NJ'
+
+# --- Additional CT Counties ---
+# New Haven County, CT
+newhaven_zips = [
+    "06401", "06403", "06405", "06410", "06418", "06437", "06443", "06460", "06461", "06471", "06472", "06473", "06477", "06478", "06479", "06483", "06484", "06488", "06510", "06511", "06512", "06513", "06514", "06515", "06516", "06517", "06518", "06519", "06520", "06524", "06525", "06530", "06531", "06532", "06533", "06534", "06535", "06536", "06537", "06538", "06540"
+]
+for zip_code in newhaven_zips:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'New Haven County, CT'
+
+# --- Additional PA ZIPs (Poconos, Lehigh Valley, Philadelphia) ---
+pa_zips = [
+    "18017", "18058", "18301", "18302", "18347", "18357", "18370", "18372", "18360", "18229", "19111", "19139", "19149", "19021", "19096"
+]
+for zip_code in pa_zips:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Pennsylvania'
+
+# --- Out of Area ---
+out_of_area_zips = [
+    "60647", "90026", "90046", "90245", "90250", "94563", "95138", "19904", "19962", "19711", "33813", "34241", "34476", "32124", "40514", "30534", "33135", "33434", "33442", "33446", "33472", "33473", "33477", "33572", "34953", "7832", "7850", "7856", "7932", "7760", "8003", "8016", "8036", "8054", "8060", "8234", "8361", "8512", "8527", "8648", "8701", "87112", "8753", "8757", "8807", "8816", "8817", "8820", "8830", "8831", "8839", "8854", "8857", "8859", "8861", "8863", "8872", "8873", "8879", "8902", "89509", "95138", "11801", "11803", "11804", "12553", "12563", "12590", "12601", "12603", "12804", "12866", "13439", "13601", "13748", "14223", "14450", "14803", "18017", "18058", "18229", "18301", "18302", "18347", "18357", "18360", "18370", "18372", "18426", "18466", "18610", "18902", "18938", "18974", "19021", "19096", "19111", "19139", "19149", "19310", "19341", "19904", "19962", "20019", "20020", "20744", "2155", "22079", "22181", "2638", "28206", "30325", "32124", "32765", "33135", "33434", "33442", "33446", "33472", "33473", "33477", "33572", "33813", "34241", "34476", "34953", "3854", "40514", "54956", "60647", "6610", "6611", "6614", "6615", "6708", "6770", "7002", "7008", "7011", "7013", "7029", "7039", "7040", "7077", "7078", "70816", "7407", "7432", "7480", "7514", "7712", "7716", "7719", "7721", "7722", "7724", "7726", "7728", "7730", "7733", "7734", "7738", "7739", "7740", "7746", "7747", "7748", "7751", "7760", "7800", "7860", "7874", "7932", "8003", "8016", "8036", "8054", "8060", "8234", "8361", "8512", "8527", "8648", "8701", "87112", "8753", "8757", "8807", "8816", "8817", "8820", "8830", "8831", "8839", "8854", "8857", "8859", "8861", "8863", "8872", "8873", "8879", "8902", "89509", "90026", "90046", "90245", "90250", "94563", "95138"]
+for zip_code in out_of_area_zips:
+    NYC_ZIP_TO_BOROUGH[zip_code] = 'Out of Area'
 
 # ZIP code coordinates for mapping
 ZIP_COORDINATES = {
@@ -285,5 +400,18 @@ AREA_COORDINATES = {
     'Essex County, NJ': {'lat': 40.7967, 'lon': -74.1677},
     'Rockland County, NY': {'lat': 41.1489, 'lon': -74.0262},
     'Fairfield County, CT': {'lat': 41.1535, 'lon': -73.3496},
+    # Newly added counties/areas
+    'Orange County, NY': {'lat': 41.3912, 'lon': -74.3118},
+    'Putnam County, NY': {'lat': 41.4352, 'lon': -73.8246},
+    'Dutchess County, NY': {'lat': 41.7784, 'lon': -73.7478},
+    'Ulster County, NY': {'lat': 41.8584, 'lon': -74.3118},
+    'Morris County, NJ': {'lat': 40.8607, 'lon': -74.5451},
+    'Passaic County, NJ': {'lat': 41.0330, 'lon': -74.3046},
+    'Somerset County, NJ': {'lat': 40.5660, 'lon': -74.6167},
+    'Middlesex County, NJ': {'lat': 40.4286, 'lon': -74.3896},
+    'Monmouth County, NJ': {'lat': 40.2584, 'lon': -74.1230},
+    'Ocean County, NJ': {'lat': 39.9653, 'lon': -74.3118},
+    'New Haven County, CT': {'lat': 41.4086, 'lon': -72.9279},
+    'Pennsylvania': {'lat': 40.7934, 'lon': -77.8607},
     'Unknown': {'lat': 40.7589, 'lon': -73.9851}
 }

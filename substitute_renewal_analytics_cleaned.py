@@ -11,22 +11,8 @@ Author: HR School Support Analysis Team
 Date: July 2025
 """
 
-import pandas as pd
-import numpy as np
 import os
-import re
-import time
-from datetime import datetime
 import warnings
-
-# Plotly imports (temporarily needed for functions not yet moved to modules)
-import plotly.offline as pyo
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import json
-import geopandas as gpd
-from shapely.geometry import shape
-from shapely import wkt
 
 # Import our modular components
 from data_processing import (
@@ -38,26 +24,19 @@ from data_processing import (
     calculate_teacher_percentage_differences,
     format_number,
     format_percentage,
-    safe_int_conversion
 )
 from geographic_analysis import (
     map_zip_to_borough,
-    get_zip_coordinates,
     analyze_substitute_data_by_borough
 )
 from visualizations import (
     create_visualization_charts,
     create_nyc_borough_map,
-    create_dual_zipcode_heatmap,
-    create_zipcode_choropleth_map_dual,
     generate_zipcode_choropleth,
 )
 from report_generation import (
     generate_html_report,
-    generate_comparison_report,
     copy_logo_to_output,
-    get_header_html,
-    get_professional_footer
 )
 warnings.filterwarnings('ignore')
 

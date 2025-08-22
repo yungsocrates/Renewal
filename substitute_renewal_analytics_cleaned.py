@@ -41,7 +41,7 @@ from report_generation import (
 warnings.filterwarnings('ignore')
 
 # === GLOBAL CONSTANTS ===
-RENEWAL_WORKSPACE = r"c:\Users\OFerreira3\Documents\Renewal"
+RENEWAL_WORKSPACE = r"D:\Renewal"
 OUTPUT_DIR = os.path.join(RENEWAL_WORKSPACE, "renewal_reports")
 
 # Column mappings based on actual CSV structure
